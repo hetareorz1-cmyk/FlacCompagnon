@@ -27,7 +27,10 @@ import {
 import { useExports } from "./components/useExports";
 import { useNativeDrop } from "./components/useNativeDrop";
 import { usePlayback } from "./components/usePlayback";
-import { useSelection, type SelectionModifiers } from "./components/useSelection";
+import {
+  useSelection,
+  type SelectionModifiers,
+} from "./components/useSelection";
 import { useTagCache, useTagPrefetch } from "./components/useTagCache";
 import { useToast } from "./components/useToast";
 
@@ -174,7 +177,28 @@ export function App() {
   // DEL (or Backspace on Mac) removes all selected rows.
   useEffect(() => {
     const handleKeyDown = (ev: KeyboardEvent) => {
-      if ((ev.key === "Delete" || ev.key === "Backspace") && selection.selectedPaths.length > 0) {
+      if (!ev || !ev.target) return;
+
+      const target = ev.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return;
+
+      // Every pop-in (cover lightbox, extended tags, online lookup, the
+      // confirm dialogs themselves) renders through the shared `Modal`
+      // component's `.cover-modal` backdrop. Without this check, Backspace
+      // pressed while one is open — e.g. to dismiss a "Discard changes?"
+      // prompt out of habit — would delete the whole selection underneath it
+      // instead of doing nothing.
+      if (document.querySelector(".cover-modal")) return;
+
+      if (
+        (ev.key === "Delete" || ev.key === "Backspace") &&
+        selection.selectedPaths.length > 0
+      ) {
         ev.preventDefault();
         deleteSelected();
       }
@@ -191,7 +215,8 @@ export function App() {
     [exports],
   );
 
-  const hasResults = analysis.report != null && analysis.orderedFiles.length > 0;
+  const hasResults =
+    analysis.report != null && analysis.orderedFiles.length > 0;
   // Memoized, not just computed: this array feeds the tag panel's derived
   // state (distinct covers, extended rows), and a fresh identity on every
   // render would keep resetting the cover carousel to the first image.
@@ -229,28 +254,36 @@ export function App() {
         )}
 
         <div className="main-col">
-          {!hasResults && !analysis.busy && <Dropzone dragOver={drop.overWindow} />}
-
-          {hasResults && (!analysis.busy || analysis.keepResultsWhileBusy) && analysis.report && (
-            <section className="results">
-              <ResultsSummary
-                report={analysis.report}
-                rootPath={commonDir(analysis.report.files.map((f) => f.path))}
-                onToast={showToast}
-              />
-              <ResultsTable
-                files={analysis.orderedFiles}
-                covers={cache.covers}
-                nowPlaying={playback.nowPlaying}
-                selectedPaths={selection.selectedPaths}
-                onSelectRow={guardedSelectRow}
-                onReorder={analysis.setDisplayOrder}
-                onReveal={(p) => api.revealInFolder(p).catch((e) => showToast(String(e), "error"))}
-                onTogglePlay={playback.togglePlay}
-                onDelete={deleteRow}
-              />
-            </section>
+          {!hasResults && !analysis.busy && (
+            <Dropzone dragOver={drop.overWindow} />
           )}
+
+          {hasResults &&
+            (!analysis.busy || analysis.keepResultsWhileBusy) &&
+            analysis.report && (
+              <section className="results">
+                <ResultsSummary
+                  report={analysis.report}
+                  rootPath={commonDir(analysis.report.files.map((f) => f.path))}
+                  onToast={showToast}
+                />
+                <ResultsTable
+                  files={analysis.orderedFiles}
+                  covers={cache.covers}
+                  nowPlaying={playback.nowPlaying}
+                  selectedPaths={selection.selectedPaths}
+                  onSelectRow={guardedSelectRow}
+                  onReorder={analysis.setDisplayOrder}
+                  onReveal={(p) =>
+                    api
+                      .revealInFolder(p)
+                      .catch((e) => showToast(String(e), "error"))
+                  }
+                  onTogglePlay={playback.togglePlay}
+                  onDelete={deleteRow}
+                />
+              </section>
+            )}
 
           {analysis.busy && (
             <Progress
