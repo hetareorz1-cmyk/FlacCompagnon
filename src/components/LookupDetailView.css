@@ -1,0 +1,104 @@
+.lookup-back-btn {
+  align-self: flex-start;
+  flex: none;
+}
+.lookup-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lookup-detail-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.lookup-detail-cover {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev2);
+}
+.lookup-detail-meta {
+  min-width: 0;
+}
+.lookup-detail-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  margin: 0 0 3px;
+  word-break: break-word;
+}
+.lookup-detail-artist {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0;
+}
+.lookup-note {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0;
+}
+.lookup-note-match {
+  color: var(--accent);
+}
+/* No `gap` here on purpose: a flex gap would show the container's own
+   background as a hairline above each row, which reads as a broken row
+   separator once a row is highlighted on hover. Rows carry their own
+   `border-bottom` instead. */
+.lookup-tracklist {
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.lookup-track {
+  display: flex;
+  gap: 10px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+.lookup-track:last-child {
+  border-bottom: none;
+}
+.lookup-track:hover {
+  background: var(--bg-elev2);
+}
+.lookup-track.selected {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-elev));
+}
+.lookup-track:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.lookup-track:disabled:hover {
+  background: none;
+}
+.lookup-track-pos {
+  flex: none;
+  width: 26px;
+  color: var(--muted);
+  text-align: right;
+}
+.lookup-track-title {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.lookup-detail-actions {
+  display: flex;
+}
+.lookup-detail-actions .btn {
+  flex: 1;
+}

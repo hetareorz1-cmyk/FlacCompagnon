@@ -33,6 +33,7 @@ import {
 } from "./components/useSelection";
 import { useTagCache, useTagPrefetch } from "./components/useTagCache";
 import { useToast } from "./components/useToast";
+import "./App.css";
 
 export function App() {
   const { toast, showToast } = useToast();

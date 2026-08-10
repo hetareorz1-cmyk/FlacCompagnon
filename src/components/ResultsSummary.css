@@ -1,0 +1,65 @@
+.results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.count {
+  font-weight: 600;
+  font-size: 14px;
+}
+.chip {
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--bg-elev2);
+  border: 1px solid var(--border);
+}
+/* Summary chips use the same per-detection colours as the row tags
+   (see ResultCells.css). */
+.chip.v-clean {
+  color: var(--clean);
+}
+.chip.v-upscaled {
+  color: var(--upscaled);
+}
+.chip.v-upsampled {
+  color: var(--upsampled);
+}
+.chip.v-transcoded {
+  color: var(--transcoded);
+}
+.chip.v-suspected {
+  color: var(--transcoded);
+}
+.chip.v-bad {
+  color: var(--bad);
+}
+.chip.v-muted {
+  color: var(--muted);
+}
+/* `.results-meta-path` (not `.results-meta` itself) carries the ellipsis
+   truncation and `min-width: 0` — the same split as `.tag-cover-info`/
+   `.tag-marquee`, and for the same reason: the icon button next to it is a
+   sibling flex item, and truncating the row itself would risk clipping that
+   button along with the overflowing text instead of just the text. */
+.results-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  max-width: 45%;
+}
+.results-meta-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

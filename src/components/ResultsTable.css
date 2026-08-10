@@ -1,0 +1,174 @@
+.table-wrap {
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain; /* don't propagate scroll / bounce to the window */
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elev);
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12.5px;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg-elev2);
+  text-align: left;
+  padding: 9px 12px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+tbody tr:hover {
+  background: var(--row-hover);
+}
+/* Table-wide: rows are dragged/selected by clicking, never by selecting
+   text — `-webkit-user-select` is required in addition to the unprefixed
+   property for this to actually take effect in Tauri's WKWebView. */
+table {
+  -webkit-user-select: none;
+  user-select: none;
+}
+tbody tr {
+  cursor: grab;
+}
+tbody tr.selected {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-elev));
+}
+tbody tr.selected:hover {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev));
+}
+.fname {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Manual row reordering (mousedown-based, see useRowDrag.ts for why). `.pressing`
+   gives immediate feedback the instant the mouse goes down — before the
+   movement threshold promotes it to an actual drag. Once dragging is under
+   way, the "picked up" look moves to `.row-drag-ghost` (a floating copy that
+   tracks the cursor — see below); the original row becomes a faint,
+   half-emptied placeholder so it's clear that's where it came from. */
+tbody tr.pressing {
+  position: relative;
+  z-index: 2;
+  background: var(--bg-elev);
+  transform: translateY(-3px) scale(1.012);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.35),
+    0 3px 8px rgba(0, 0, 0, 0.28);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+tbody tr.dragging {
+  cursor: grabbing;
+  opacity: 0.3;
+}
+
+/* Insertion line — a solid rule between the two rows the dragged one would
+   land between. Applied to the `td`s rather than the `tr` itself: box-shadow
+   and borders on `<tr>` render unreliably across table layout engines
+   (notably in Tauri's WKWebView), `td` borders don't have that problem. */
+tbody tr.drop-before td {
+  border-top: 3px solid var(--text);
+}
+tbody tr.drop-after td {
+  border-bottom: 3px solid var(--text);
+}
+
+/* Floating "layer" that follows the cursor while a row is being dragged — a
+   semi-transparent snapshot of the row, created imperatively in useRowDrag.ts
+   and positioned via inline `left`/`top` on every mousemove.
+   `pointer-events: none` is required so it doesn't itself become the element
+   under the cursor (which would break the `elementFromPoint` lookup used to
+   find the actual drop target beneath it). */
+.row-drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.88;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.row-drag-ghost table {
+  margin: 0;
+}
+.row-drag-ghost td {
+  border-bottom: none !important;
+}
+/* Shown under the stacked rows when a multi-row drag has more selected rows
+   than the ghost bothers to render (see GHOST_STACK_CAP) — a plain summary
+   line, not a badge, so it reads as part of the same floating list. */
+.row-drag-more {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-muted, #888);
+  text-align: center;
+  background: var(--bg-elev);
+}
+
+/* Reveal-in-file-browser button column. */
+th:first-child {
+  width: 32px;
+}
+td.reveal {
+  width: 32px;
+  padding: 4px 4px 4px 10px;
+  text-align: center;
+}
+
+/* Thumbnail / hover-to-preview column, right after the reveal button. */
+th:nth-child(2) {
+  width: 32px;
+}
+td.thumb {
+  width: 32px;
+  padding: 4px;
+  text-align: center;
+}
+
+/* Delete-row button column. The button is `.icon-btn`, variant "danger"
+   (red only on hover — see IconButton.css; this is the one deliberate
+   exception from the cover panel's always-red delete, since a whole table's
+   worth of permanently-red icons would be noise). */
+td.rowdel {
+  width: 32px;
+  padding: 4px 10px 4px 4px;
+  text-align: center;
+}
+
+/* (The old single-verdict cell was replaced by the per-detection tags —
+   see ResultCells.css.) */
+
+/* Size column: right-aligned and tabular so the magnitudes line up and can
+   be compared down the column at a glance. */
+td.size {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Detections column: one or more small tags — see ResultCells.css. */
+td.detections {
+  white-space: normal;
+  min-width: 130px;
+}

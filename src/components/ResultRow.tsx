@@ -10,6 +10,7 @@ import type { CoverArt, FileAnalysis } from "../types";
 import { coverDataUrl, fmtCutoff, fmtDuration, fmtSize } from "../format";
 import { IconButton } from "./IconButton";
 import { LiveEqualizerBars } from "./LiveEqualizerBars";
+import "./ResultRow.css";
 import {
   ClippingCell,
   DetectionsCell,
@@ -112,7 +113,7 @@ export function ResultRow({
           {playing && playingRequestId != null ? (
             <>
               {/* Shown while playing; swapped for the stop icon on hover
-                  (see .play-btn.playing:hover in styles.css) so the row
+                  (see .play-btn.playing:hover in ResultRow.css) so the row
                   reads "now playing" at rest and "click to stop" on hover. */}
               <span className="play-overlay-idle">
                 <LiveEqualizerBars requestId={playingRequestId} />

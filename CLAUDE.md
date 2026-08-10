@@ -73,6 +73,30 @@ The split is deliberate: anything that can be tested without a GUI belongs in
   focus — not for bypassing the render cycle.
 - Lists get a stable `key` (the file path), never the array index.
 
+### Styling
+
+- **One component, one CSS file.** `ComponentName.tsx` owns
+  `ComponentName.css`, imported as a side effect at the top of the component
+  (`import "./ComponentName.css";`) — the same "one module, one
+  responsibility" rule as the rest of this file, applied to styles: a
+  component's look lives next to the markup that uses it, not in a shared
+  monolith where an edit to one component's styles risks another's.
+- **Rules used by more than one component go in `src/shared.css`** (buttons,
+  status colours, the spinner, the `.modal-card` shell — anything that would
+  otherwise be copy-pasted and drift out of sync between components).
+  `src/theme.css` holds the CSS custom properties (light/dark palettes) and
+  the base reset; both are imported once, from `main.tsx`, ahead of every
+  component's own stylesheet.
+- Before adding a new rule, check `shared.css` first — a class only one
+  component currently uses but that conceptually belongs to the design system
+  (another button variant, another status colour) belongs there, not
+  re-declared locally.
+- CSS classes are global (no CSS Modules), same as before the split: nothing
+  stops one component's file from defining a selector another component's
+  markup also matches. Name classes after the component that owns them
+  (`tag-cover-*`, `lookup-*`) to keep collisions unlikely, and do not rely on
+  import order for specificity.
+
 ### index.html
 
 `index.html` is the **app shell**: `<head>`, a root mount node, and the module

@@ -1,0 +1,60 @@
+/* App shell layout (the #app column, the two-pane main row, the results
+   section wrapper) and the toast — both rendered directly by App.tsx rather
+   than a dedicated component. */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* Top padding much smaller than the other sides: the window has a normal
+     OS title bar above it already (no overlay/hiddenInset titlebar, so no
+     traffic lights to clear), so the extra ~18px here was just dead space
+     stacking on top of it rather than serving any layout purpose. */
+  padding: 6px 22px 18px;
+  gap: 16px;
+}
+
+/* --- Main row: tag panel (left) + dropzone/results/progress column --- */
+.main-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+}
+.main-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --- Results --- */
+.results {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* --- Toast --- */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elev2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  box-shadow: 0 8px 30px var(--shadow);
+  max-width: 80%;
+}
+.toast.error {
+  border-color: var(--bad);
+}
+.toast.info {
+  border-color: var(--accent);
+}

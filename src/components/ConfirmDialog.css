@@ -1,0 +1,20 @@
+/* Generic confirm/cancel pop-in. Sizing only — the card look comes from the
+   shared `.modal-card` (shared.css), added alongside this class in
+   ConfirmDialog.tsx's `innerClassName`. */
+.confirm-dialog-inner {
+  width: min(340px, 88vw);
+}
+.confirm-dialog-message {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.confirm-dialog-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.confirm-dialog-actions .btn {
+  flex: 1;
+}

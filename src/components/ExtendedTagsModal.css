@@ -1,0 +1,43 @@
+/* Sizing only — the card look (background/border/shadow/padding) comes from
+   the shared `.modal-card` (shared.css), added alongside this class in
+   ExtendedTagsModal.tsx's `innerClassName`. */
+.extended-tags-inner {
+  width: min(480px, 88vw);
+  max-height: 78vh;
+}
+.extended-tags-body {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ext-row {
+  display: flex;
+  gap: 14px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.ext-row:last-child {
+  border-bottom: none;
+}
+.ext-key {
+  flex: none;
+  width: 40%;
+  color: var(--muted);
+  word-break: break-word;
+}
+.ext-value {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.ext-value.ext-mixed {
+  color: var(--muted);
+  font-style: italic;
+}
+.extended-tags-empty {
+  color: var(--muted);
+  font-size: 12.5px;
+  padding: 8px 0;
+}

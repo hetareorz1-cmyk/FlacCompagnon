@@ -1,0 +1,20 @@
+/* Heights are set inline per bar from real playback loudness (see
+   `LiveEqualizerBars`), not a CSS keyframe loop — the transition is what
+   turns the ~16 updates/second it receives into smooth motion instead of
+   visible steps. */
+.eq-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  width: 14px; /* 4 bars at 2px + 3 gaps at 2px — the 24x24 thumbnail button
+                  around it isn't growing, so this has to clear its edges
+                  with room to spare, not just fit exactly. */
+  height: 12px;
+}
+.eq-bars span {
+  width: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  transition: height 0.08s linear;
+}

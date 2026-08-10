@@ -7,6 +7,7 @@ import { Folder } from "lucide-react";
 import type { FolderReport } from "../types";
 import * as api from "../api";
 import { IconButton } from "./IconButton";
+import "./ResultsSummary.css";
 
 export interface ResultsSummaryProps {
   report: FolderReport;

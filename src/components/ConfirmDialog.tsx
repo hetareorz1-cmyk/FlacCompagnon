@@ -5,6 +5,7 @@
 // cover, discarding unsaved tag edits by switching the selection.
 
 import { Modal } from "./Modal";
+import "./ConfirmDialog.css";
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -28,7 +29,7 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   return (
-    <Modal open={open} onClose={onCancel} innerClassName="confirm-dialog-inner" title={title}>
+    <Modal open={open} onClose={onCancel} innerClassName="modal-card confirm-dialog-inner" title={title}>
       <p className="confirm-dialog-message">{message}</p>
       <div className="confirm-dialog-actions">
         <button className="btn btn-ghost" type="button" onClick={onCancel}>

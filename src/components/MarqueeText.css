@@ -1,0 +1,34 @@
+/* The text side of the cover-info bandeau: `flex: 1` + `min-width: 0` is what
+   lets it shrink below its content's natural width instead of pushing the
+   icon/role group off to the right (or forcing the whole row wider than the
+   panel) — without it, an ellipsis-only truncation used to hide most of the
+   line. This component scrolls the hidden overflow instead. */
+.tag-marquee {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+.tag-marquee-track {
+  display: flex;
+  width: max-content;
+}
+.tag-marquee-track:not(.tag-marquee-static) {
+  animation: tag-marquee-scroll 9s linear infinite;
+}
+.tag-marquee-item {
+  flex: none;
+  white-space: nowrap;
+  padding-right: 28px; /* breathing room before the looping duplicate */
+}
+/* Moves by exactly one item's width (item + its trailing gap) — the two
+   copies are pixel-for-pixel aligned at that point, so the loop is seamless
+   rather than visibly "jumping" back to the start. */
+@keyframes tag-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

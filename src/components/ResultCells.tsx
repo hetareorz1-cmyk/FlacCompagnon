@@ -4,6 +4,7 @@
 // them.
 
 import type { ClippingInfo, Detections, FileAnalysis, FlacMd5Status } from "./../types";
+import "./ResultCells.css";
 
 export function DetectionsCell({ d }: { d: Detections }) {
   // Ordered least to most severe — the container's bit depth, then its sample

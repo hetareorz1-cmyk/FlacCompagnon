@@ -7,6 +7,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
+import "./Modal.css";
 
 export interface ModalProps {
   open: boolean;
@@ -42,7 +43,7 @@ export function Modal({ open, onClose, innerClassName, title, children }: ModalP
         <button className="cover-modal-close" title="Close" onClick={onClose}>
           <X size={15} strokeWidth={1.8} />
         </button>
-        {title && <h3 className="extended-tags-title">{title}</h3>}
+        {title && <h3 className="modal-title">{title}</h3>}
         {children}
       </div>
     </div>

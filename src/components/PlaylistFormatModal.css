@@ -1,0 +1,57 @@
+/* Playlist export format pop-in — a tiny choice step before the native save
+   dialog opens, since that dialog can't host a custom radio group itself.
+   Sizing only — the card look comes from the shared `.modal-card`
+   (shared.css), added alongside this class in PlaylistFormatModal.tsx's
+   `innerClassName`. */
+.playlist-format-inner {
+  width: min(360px, 88vw);
+}
+.playlist-format-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 4px;
+}
+.playlist-format-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.playlist-format-option:hover {
+  border-color: var(--accent);
+}
+/* `:has()` covers modern engines; `.selected` (toggled in the component on
+   change) is the fallback for anything older. */
+.playlist-format-option:has(input:checked),
+.playlist-format-option.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.playlist-format-option input {
+  margin-top: 3px;
+  flex: none;
+}
+.playlist-format-option span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12.5px;
+}
+.playlist-format-option small {
+  font-size: 11px;
+}
+.playlist-format-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.playlist-format-actions .btn {
+  flex: 1;
+}

@@ -1,0 +1,60 @@
+/* Every icon-only button in the app (IconButton.tsx) shares this: one 20px
+   box, one border-radius, one set of hover treatments picked by variant.
+   This used to be five copy-pasted `.xxx-btn` rules that had quietly drifted
+   apart (4px vs. 6px radius, `--bg-elev` vs. `--bg-elev2` hover surface, a
+   12% vs. 14% red hover tint) — one definition means one place to keep them
+   in sync from here on. */
+.icon-btn {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* "neutral" (default, no modifier class): reveal, extract cover — just does
+   something, turns accent blue on hover. */
+.icon-btn:hover {
+  background: var(--bg-elev2);
+  color: var(--accent);
+}
+/* "close": dismiss/stop, not destructive — panel close, cancel task. Red
+   text on hover, no background tint (that tint is reserved for things that
+   actually delete data, right below). */
+.icon-btn-close:hover {
+  color: var(--bad);
+}
+/* "danger": deletes something — muted at rest like everything else, but the
+   hover gets a red tint on the background too, not just the icon, since
+   this one hover state has to read as more consequential than "close"'s. */
+.icon-btn-danger:hover {
+  color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 12%, transparent);
+}
+/* "danger-persistent": same as "danger", but red even before the mouse gets
+   there. Reserved for the one delete button that stands alone rather than
+   sitting in a dense, repeated list (the tag panel's cover) — a whole
+   table's worth of permanently-red trash icons would be visual noise, but a
+   single one earns the extra warning. */
+.icon-btn-danger-persistent,
+.icon-btn-danger-persistent:hover {
+  color: var(--bad);
+}
+.icon-btn-danger-persistent:hover {
+  background: color-mix(in srgb, var(--bad) 12%, transparent);
+}

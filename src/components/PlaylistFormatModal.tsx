@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import type { PlaylistFormat } from "../types";
 import { Modal } from "./Modal";
+import "./PlaylistFormatModal.css";
 
 export interface PlaylistFormatModalProps {
   open: boolean;
@@ -32,7 +33,7 @@ export function PlaylistFormatModal({ open, onClose, onConfirm }: PlaylistFormat
     <Modal
       open={open}
       onClose={onClose}
-      innerClassName="extended-tags-inner playlist-format-inner"
+      innerClassName="modal-card playlist-format-inner"
       title="Export playlist"
     >
       <div className="playlist-format-options">

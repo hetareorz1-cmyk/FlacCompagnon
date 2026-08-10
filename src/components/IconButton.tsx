@@ -8,6 +8,7 @@
 // class of these at once, and keeps the next one from drifting too.
 
 import type { MouseEvent, ReactNode } from "react";
+import "./IconButton.css";
 
 export interface IconButtonProps {
   icon: ReactNode;

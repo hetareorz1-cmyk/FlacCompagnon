@@ -1,0 +1,18 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+/* No `.brand` block anymore — the window's own titlebar already shows
+   "FlacCompagnon", so a second title + tagline here was a duplicate.
+   `margin-left: auto` keeps the actions where they were (flush right)
+   now that they're `.topbar`'s only child. */
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-left: auto;
+}

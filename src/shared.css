@@ -1,0 +1,118 @@
+/* ---------------------------------------------------------------------------
+   Styles shared by more than one component. Anything that only one component
+   uses belongs in that component's own CSS file instead — this file is for
+   the cases where duplicating the rule would just invite drift (buttons,
+   status colours, the spinner, the modal card shell).
+
+   Imported once, from main.tsx, alongside theme.css.
+--------------------------------------------------------------------------- */
+
+.btn {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s,
+    border-color 0.15s;
+}
+.btn:not(:disabled):hover {
+  background: var(--accent-2);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background: var(--bg-elev2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:not(:disabled):hover {
+  background: var(--border);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:not(:disabled):hover {
+  background: var(--bg-elev2);
+  color: var(--text);
+}
+.btn-danger {
+  background: var(--bad);
+  color: #fff;
+}
+.btn-danger:not(:disabled):hover {
+  background: color-mix(in srgb, var(--bad) 82%, black);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Any cell/element that carries an explanatory tooltip. */
+.has-tip {
+  cursor: help;
+}
+
+.c-ok {
+  color: var(--ok);
+  font-weight: 600;
+}
+.c-bad {
+  color: var(--bad);
+  font-weight: 600;
+}
+.c-mid {
+  color: var(--mid);
+  font-weight: 600;
+}
+.c-warn {
+  color: var(--warn);
+}
+.c-muted {
+  color: var(--muted);
+}
+
+.spinner {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Shared "card" shell for every pop-in except the cover lightbox (which sits
+   directly on the backdrop with no card behind the image — see Modal.css).
+   Used to be copy-pasted into `.extended-tags-inner`, `.lookup-inner` and
+   `.confirm-dialog-inner` independently; `PlaylistFormatModal` even reused
+   `.extended-tags-inner` by name to get it, which is the tell that it should
+   have been a shared class all along. Each modal now adds this alongside its
+   own class, which only carries its width/max-height sizing. */
+.modal-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px 16px;
+  box-shadow: 0 20px 50px var(--shadow);
+  align-items: stretch;
+}
+
+.hidden {
+  display: none !important;
+}

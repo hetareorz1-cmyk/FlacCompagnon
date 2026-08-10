@@ -1,0 +1,68 @@
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 1px 2px 1px 0;
+  border: 1px solid var(--border);
+  background: var(--bg-elev2);
+  cursor: help;
+}
+/* One colour per detection, identical to the landing page and ordered by
+   severity: Clean = green, Upscaled = amber, Upsampled = orange,
+   Transcoded = red. "Transcoded?" (suspected) reuses the transcoded hue with a
+   fainter fill — same family, weaker claim. Colours come from the theme
+   variables, so light mode gets legible equivalents automatically. */
+.tag.t-clean {
+  color: var(--clean);
+  background: color-mix(in srgb, var(--clean) 14%, transparent);
+  border-color: color-mix(in srgb, var(--clean) 42%, transparent);
+}
+.tag.t-upscaled {
+  color: var(--upscaled);
+  background: color-mix(in srgb, var(--upscaled) 14%, transparent);
+  border-color: color-mix(in srgb, var(--upscaled) 42%, transparent);
+}
+.tag.t-upsampled {
+  color: var(--upsampled);
+  background: color-mix(in srgb, var(--upsampled) 14%, transparent);
+  border-color: color-mix(in srgb, var(--upsampled) 42%, transparent);
+}
+.tag.t-transcoded {
+  color: var(--transcoded);
+  background: color-mix(in srgb, var(--transcoded) 14%, transparent);
+  border-color: color-mix(in srgb, var(--transcoded) 42%, transparent);
+}
+.tag.t-suspected {
+  color: var(--transcoded);
+  background: color-mix(in srgb, var(--transcoded) 8%, transparent);
+  border-color: color-mix(in srgb, var(--transcoded) 28%, transparent);
+}
+
+/* Verified quality badge (Hi-Res / DSD64...) — custom chip, gold accent. */
+.qbadge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #8a6d1a;
+  background: color-mix(in srgb, #e6b93c 22%, transparent);
+  border: 1px solid color-mix(in srgb, #e6b93c 55%, transparent);
+}
+:root[data-theme="dark"] .qbadge {
+  color: #e9c96a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .qbadge {
+    color: #e9c96a;
+  }
+}
+.qbadge.q-unk {
+  color: var(--muted);
+  background: var(--bg-elev2);
+  border-color: var(--border);
+}

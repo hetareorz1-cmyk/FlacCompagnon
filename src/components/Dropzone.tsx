@@ -4,6 +4,7 @@
 // highlight the app-level handler asks for.
 
 import { Download } from "lucide-react";
+import "./Dropzone.css";
 
 export interface DropzoneProps {
   dragOver: boolean;

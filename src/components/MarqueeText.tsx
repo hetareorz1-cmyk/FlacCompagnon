@@ -7,6 +7,7 @@
 // `title` tooltip on hover.
 
 import { useEffect, useRef, useState } from "react";
+import "./MarqueeText.css";
 
 export interface MarqueeTextProps {
   text: string;

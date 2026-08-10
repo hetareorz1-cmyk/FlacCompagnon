@@ -13,6 +13,7 @@ import { Modal } from "./Modal";
 import { LookupDetailView } from "./LookupDetailView";
 import { LookupSearchView } from "./LookupSearchView";
 import { useLookup } from "./useLookup";
+import "./LookupModal.css";
 
 // The Discogs personal access token lives in localStorage (nowhere on the Rust
 // side) since it's the user's own credential, entered once and reused across
@@ -145,7 +146,7 @@ export function LookupModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} innerClassName="lookup-inner" title="Search online">
+    <Modal open={open} onClose={onClose} innerClassName="modal-card lookup-inner" title="Search online">
       {lookup.loading.on && (
         <div className="lookup-loading">
           <span className="spinner" />

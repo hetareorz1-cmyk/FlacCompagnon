@@ -4,6 +4,7 @@
 import { X } from "lucide-react";
 
 import { IconButton } from "./IconButton";
+import "./Progress.css";
 
 export interface ProgressProps {
   label: string;

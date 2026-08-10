@@ -1,0 +1,62 @@
+.play-btn {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: var(--bg-elev2);
+  color: var(--muted);
+  cursor: pointer;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.play-btn.playing {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.thumb-img {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+.thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+/* A playing row keeps its overlay visible at rest (the equalizer bars are the
+   "now playing" indicator, not just a hover affordance); every other row
+   only reveals its overlay (a plain Play icon) on hover. */
+.play-btn:hover .play-overlay,
+.play-btn.playing .play-overlay {
+  opacity: 1;
+}
+
+/* Two overlay states for a playing row: the bars at rest, the Stop icon on
+   hover — swapped with `display` rather than unmounted, so hovering never
+   restarts the bars' animation. */
+.play-overlay-hover {
+  display: none;
+}
+.play-btn.playing:hover .play-overlay-idle {
+  display: none;
+}
+.play-btn.playing:hover .play-overlay-hover {
+  display: flex;
+}

@@ -1,0 +1,57 @@
+.tag-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.tag-field-head span:first-child {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.tag-field-badge {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: 6px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+.tag-field input[type="text"],
+.tag-field textarea {
+  width: 100%;
+  background: var(--bg-elev2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  color: var(--text);
+  font-family: inherit;
+  resize: vertical;
+}
+.tag-field input[type="text"]:focus,
+.tag-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.tag-field input::placeholder,
+.tag-field textarea::placeholder {
+  color: var(--muted);
+  font-style: italic;
+}
+.tag-field-pair {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tag-field-pair input {
+  min-width: 0;
+  text-align: center;
+}
+.tag-field-sep {
+  color: var(--muted);
+  flex: none;
+}

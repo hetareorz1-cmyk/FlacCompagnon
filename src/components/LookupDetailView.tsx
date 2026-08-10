@@ -5,6 +5,7 @@
 
 import type { LookupRelease } from "../types";
 import { coverDataUrl } from "../format";
+import "./LookupDetailView.css";
 
 export interface LookupDetailViewProps {
   release: LookupRelease;

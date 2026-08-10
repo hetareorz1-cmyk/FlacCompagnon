@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import type { TagFieldValue } from "./TagField";
 import { TagField, TagFractionField } from "./TagField";
 import { TAG_LAYOUT, type TagTextField } from "./tagLayout";
+import "./TagFields.css";
 
 export interface TagFieldsProps {
   values: Record<TagTextField, TagFieldValue>;

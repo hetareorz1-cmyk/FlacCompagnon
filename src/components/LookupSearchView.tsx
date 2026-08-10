@@ -3,6 +3,7 @@
 
 import type { LookupCandidate } from "../types";
 import type { LookupStatus } from "./useLookup";
+import "./LookupSearchView.css";
 
 export interface LookupSearchViewProps {
   query: string;

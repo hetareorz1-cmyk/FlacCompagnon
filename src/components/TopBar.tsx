@@ -2,6 +2,7 @@
 // what's enabled is decided by the app state passed in.
 
 import { useTheme } from "./useTheme";
+import "./TopBar.css";
 
 export interface TopBarProps {
   busy: boolean;

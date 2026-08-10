@@ -1,0 +1,71 @@
+/* --- Progress --- */
+.progress {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.progress-label {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+/* `${verb} ${current}/${total} — ${file}` can be long enough to wrap inside
+   the flex row above — without `min-width: 0`, a flex item won't shrink
+   below its content's width, so the line would break wherever it had to
+   (often stranding the leading word, e.g. "Analyzing", alone below the rest).
+   Truncating to one line with an ellipsis instead is the same convention
+   already used for long values elsewhere (`.fname`, `.results-meta`). */
+#progress-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The cancel button is `.icon-btn` (IconButton, variant "close") — see
+   IconButton.css. */
+.progress-track {
+  height: 8px;
+  background: var(--bg-elev2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+/* Busy overlay shown when files are dragged over during analysis. */
+.drop-guard {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(2px);
+  cursor: not-allowed;
+}
+.drop-guard-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 22px;
+  box-shadow: 0 10px 34px var(--shadow);
+}
+.drop-guard-box p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 13.5px;
+}

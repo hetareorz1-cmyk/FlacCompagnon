@@ -13,6 +13,7 @@ import { X } from "lucide-react";
 import type { CoverArt as CoverArtData, LookupRelease, TagSet } from "../types";
 import * as api from "../api";
 import { commonDir } from "../format";
+import "./TagPanel.css";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { CoverArt } from "./CoverArt";
 import { CoverModal } from "./CoverModal";

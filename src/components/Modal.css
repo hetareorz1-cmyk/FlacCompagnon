@@ -1,0 +1,58 @@
+/* Shared pop-in shell: backdrop + centered panel. Every specific modal
+   (ExtendedTagsModal, LookupModal, PlaylistFormatModal, ConfirmDialog) adds
+   its own class for sizing, plus `.modal-card` (shared.css) for the actual
+   card look — the cover lightbox is the one exception, sitting directly on
+   the backdrop with no card behind the image. */
+.cover-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: color-mix(in srgb, var(--bg) 55%, black 25%);
+  backdrop-filter: blur(3px);
+  cursor: zoom-out;
+}
+.cover-modal-inner {
+  position: relative;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: default;
+}
+.cover-modal-close {
+  position: absolute;
+  /* Above the lookup pop-in's loading overlay, so a slow request never
+     traps the user inside a modal they can't dismiss. */
+  z-index: 2;
+  top: -14px;
+  right: -14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+.cover-modal-close:hover {
+  background: var(--bg-elev2);
+}
+
+/* Generic pop-in title — used by every modal that passes a `title` prop, not
+   just one of them, hence the generic name (renamed from the original
+   `.extended-tags-title`, which only made sense for ExtendedTagsModal). */
+.modal-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+}

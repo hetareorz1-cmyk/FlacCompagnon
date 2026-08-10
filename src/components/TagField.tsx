@@ -5,6 +5,8 @@
 // and the disagreement is shown instead — a badge where there's room, a
 // compact "≠" placeholder in the narrow ones.
 
+import "./TagField.css";
+
 export interface TagFieldValue {
   value: string;
   mixed: boolean;

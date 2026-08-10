@@ -10,6 +10,7 @@ import type { CoverArt, FileAnalysis } from "../types";
 import { ResultRow } from "./ResultRow";
 import { useRowDrag } from "./useRowDrag";
 import type { SelectionModifiers } from "./useSelection";
+import "./ResultsTable.css";
 
 export interface ResultsTableProps {
   files: FileAnalysis[];

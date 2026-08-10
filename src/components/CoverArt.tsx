@@ -13,6 +13,7 @@ import { ImageDown, Music, Trash2, Upload } from "lucide-react";
 
 import type { CoverArt as CoverArtData } from "../types";
 import { PICTURE_TYPE_LABELS, coverDataUrl, pictureTypeLabel } from "../format";
+import "./CoverArt.css";
 import { IconButton } from "./IconButton";
 import { MarqueeText } from "./MarqueeText";
 

@@ -4,6 +4,7 @@
 // edit.
 
 import { Modal } from "./Modal";
+import "./ExtendedTagsModal.css";
 
 export interface ExtendedRow {
   key: string;
@@ -20,7 +21,7 @@ export interface ExtendedTagsModalProps {
 
 export function ExtendedTagsModal({ open, rows, onClose }: ExtendedTagsModalProps) {
   return (
-    <Modal open={open} onClose={onClose} innerClassName="extended-tags-inner" title="Extended tags">
+    <Modal open={open} onClose={onClose} innerClassName="modal-card extended-tags-inner" title="Extended tags">
       <div className="extended-tags-body">
         {rows.length === 0 ? (
           <p className="extended-tags-empty">No extended tags.</p>

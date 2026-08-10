@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 
 import type { PlaybackLevel } from "../types";
+import "./LiveEqualizerBars.css";
 
 // Each is how much of the gap to the new level that bar closes per ~60ms
 // update — low means it lags well behind, high means it's almost instant.

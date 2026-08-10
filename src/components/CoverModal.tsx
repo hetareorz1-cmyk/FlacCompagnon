@@ -4,6 +4,7 @@
 import type { CoverArt } from "../types";
 import { coverDataUrl, pictureTypeLabel } from "../format";
 import { Modal } from "./Modal";
+import "./CoverModal.css";
 
 export interface CoverModalProps {
   /// The cover to show; `null` closes the lightbox.

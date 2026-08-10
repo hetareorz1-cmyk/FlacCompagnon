@@ -1,0 +1,114 @@
+/* ---------------------------------------------------------------------------
+   Theming: default follows the OS (prefers-color-scheme). A data-theme
+   attribute on <html> overrides it (Auto / Light / Dark toggle).
+
+   Imported once, from main.tsx — every component relies on these custom
+   properties, so this (plus shared.css) is the only CSS not co-located with
+   a single component.
+--------------------------------------------------------------------------- */
+
+/* Light palette (default). */
+:root {
+  --bg: #f4f6f9;
+  --bg-elev: #ffffff;
+  --bg-elev2: #eef1f6;
+  --border: #d9dee7;
+  --text: #1b1f27;
+  --muted: #616a7d;
+  --accent: #3a6fd8;
+  --accent-2: #2f5cc0;
+  --accent-contrast: #ffffff;
+  --ok: #12a06a;
+  --bad: #dc2626;
+  --warn: #b7790c;
+  --mid: #c56a1a; /* medium severity (clipping) */
+  /* One colour per detection, in increasing order of severity:
+     amber (the container lies about bit depth) -> orange (it lies about the
+     sample rate) -> red (the audio itself was destroyed by a lossy codec). */
+  --clean: #12a06a;
+  --upscaled: #b7790c;
+  --upsampled: #c56a1a;
+  --transcoded: #dc2626;
+  --unknown: #616a7d;
+  --shadow: rgba(20, 30, 50, 0.14);
+  --row-hover: #e4eaf5;
+  color-scheme: light;
+}
+
+/* Dark palette. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #0d0e13; /* matches the marketing site's dark background (site/styles.css) */
+    --bg-elev: #1c1f28;
+    --bg-elev2: #232734;
+    --border: #2c3140;
+    --text: #e6e8ee;
+    --muted: #8b93a7;
+    --accent: #5b8def;
+    --accent-2: #3a6fd8;
+    --accent-contrast: #ffffff;
+    --ok: #3ecf8e;
+    --bad: #ef5b6a;
+    --warn: #f0b849;
+    --mid: #e08b3b;
+    --clean: #3ecf8e;
+    --upscaled: #f0b849;
+    --upsampled: #e08b3b;
+    --transcoded: #ef5b6a;
+    --unknown: #8b93a7;
+    --shadow: rgba(0, 0, 0, 0.5);
+    --row-hover: #2d3342;
+    color-scheme: dark;
+  }
+}
+
+/* Manual overrides. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0d0e13; /* matches the marketing site's dark background (site/styles.css) */
+  --bg-elev: #1c1f28;
+  --bg-elev2: #232734;
+  --border: #2c3140;
+  --text: #e6e8ee;
+  --muted: #8b93a7;
+  --accent: #5b8def;
+  --accent-2: #3a6fd8;
+  --accent-contrast: #ffffff;
+  --ok: #3ecf8e;
+  --bad: #ef5b6a;
+  --warn: #f0b849;
+  --mid: #e08b3b;
+  --clean: #3ecf8e;
+  --upscaled: #f0b849;
+  --upsampled: #e08b3b;
+  --transcoded: #ef5b6a;
+  --unknown: #8b93a7;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --row-hover: #2d3342;
+  color-scheme: dark;
+}
+
+:root {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  overflow: hidden; /* the app manages its own scroll areas */
+  overscroll-behavior: none; /* kill the elastic rubber-band bounce */
+}
