@@ -2,7 +2,7 @@
 //! on discogs.com) — the frontend keeps it in `localStorage` and passes it in
 //! on every call; nothing here stores it.
 
-use super::http::{fetch_cover, http_client, user_agent};
+use super::http::{fetch_cover, http_client, parse_json_response, user_agent};
 use super::{LookupCandidate, LookupRelease, LookupTrack};
 
 /// Results per search page — matches MusicBrainz's limit so the pop-in reads
@@ -37,13 +37,7 @@ pub async fn discogs_search(query: String, token: String) -> Result<Vec<LookupCa
     if resp.status() == reqwest::StatusCode::UNAUTHORIZED {
         return Err("Discogs rejected the API token — check it in the search panel.".to_string());
     }
-    if !resp.status().is_success() {
-        return Err(format!("Discogs returned {}", resp.status()));
-    }
-    let body: serde_json::Value = resp
-        .json()
-        .await
-        .map_err(|e| format!("Discogs response was not valid JSON: {e}"))?;
+    let body = parse_json_response(resp, "Discogs").await?;
 
     let mut out = Vec::new();
     for r in body
@@ -102,13 +96,10 @@ pub async fn discogs_detail(id: String, token: String) -> Result<LookupRelease, 
         .send()
         .await
         .map_err(|e| format!("Discogs request failed: {e}"))?;
-    if !resp.status().is_success() {
-        return Err(format!("Discogs returned {}", resp.status()));
+    if resp.status() == reqwest::StatusCode::UNAUTHORIZED {
+        return Err("Discogs rejected the API token — check it in the search panel.".to_string());
     }
-    let body: serde_json::Value = resp
-        .json()
-        .await
-        .map_err(|e| format!("Discogs response was not valid JSON: {e}"))?;
+    let body = parse_json_response(resp, "Discogs").await?;
 
     let title = body
         .get("title")

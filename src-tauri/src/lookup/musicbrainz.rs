@@ -3,7 +3,7 @@
 //! naturally respects. Cover art comes from the Cover Art Archive, keyed by
 //! the same release id.
 
-use super::http::{fetch_cover, http_client, user_agent};
+use super::http::{fetch_cover, http_client, parse_json_response, user_agent};
 use super::{year_prefix, LookupCandidate, LookupRelease, LookupTrack};
 
 /// How many search results to ask for. Enough to find the right release
@@ -56,13 +56,7 @@ pub async fn musicbrainz_search(query: String) -> Result<Vec<LookupCandidate>, S
         .send()
         .await
         .map_err(|e| format!("MusicBrainz request failed: {e}"))?;
-    if !resp.status().is_success() {
-        return Err(format!("MusicBrainz returned {}", resp.status()));
-    }
-    let body: serde_json::Value = resp
-        .json()
-        .await
-        .map_err(|e| format!("MusicBrainz response was not valid JSON: {e}"))?;
+    let body = parse_json_response(resp, "MusicBrainz").await?;
 
     let mut out = Vec::new();
     for r in body
@@ -118,13 +112,7 @@ pub async fn musicbrainz_detail(mbid: String) -> Result<LookupRelease, String> {
         .send()
         .await
         .map_err(|e| format!("MusicBrainz request failed: {e}"))?;
-    if !resp.status().is_success() {
-        return Err(format!("MusicBrainz returned {}", resp.status()));
-    }
-    let body: serde_json::Value = resp
-        .json()
-        .await
-        .map_err(|e| format!("MusicBrainz response was not valid JSON: {e}"))?;
+    let body = parse_json_response(resp, "MusicBrainz").await?;
 
     let title = body
         .get("title")

@@ -33,6 +33,21 @@ pub(super) fn http_client() -> Result<reqwest::Client, String> {
         .map_err(|e| format!("Could not create the HTTP client: {e}"))
 }
 
+/// Turn a provider's response into parsed JSON, or an error message naming
+/// the provider — the "make sure it actually succeeded, then parse it" step
+/// every search/detail call repeats, whichever provider it talks to.
+pub(super) async fn parse_json_response(
+    resp: reqwest::Response,
+    provider: &str,
+) -> Result<serde_json::Value, String> {
+    if !resp.status().is_success() {
+        return Err(format!("{provider} returned {}", resp.status()));
+    }
+    resp.json()
+        .await
+        .map_err(|e| format!("{provider} response was not valid JSON: {e}"))
+}
+
 /// Best-effort image download — used for both providers' cover art. `None`
 /// on any failure (missing image, network error, unrecognized format): the
 /// rest of the lookup result is still useful without a cover.
