@@ -87,18 +87,26 @@
 }
 
 :root {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   color: var(--text);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   margin: 0;
   height: 100%;
   background: var(--bg);
-  overflow: hidden;            /* the app manages its own scroll areas */
-  overscroll-behavior: none;   /* kill the elastic rubber-band bounce */
+  overflow: hidden; /* the app manages its own scroll areas */
+  overscroll-behavior: none; /* kill the elastic rubber-band bounce */
 }
 
 #app {
@@ -125,7 +133,13 @@ html, body {
    "FlacCompagnon", so a second title + tagline here was a duplicate.
    `margin-left: auto` keeps the actions where they were (flush right)
    now that they're `.topbar`'s only child. */
-.actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
 .btn {
   background: var(--accent);
   color: var(--accent-contrast);
@@ -135,16 +149,42 @@ html, body {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, opacity 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    opacity 0.15s,
+    border-color 0.15s;
 }
-.btn:not(:disabled):hover { background: var(--accent-2); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-secondary { background: var(--bg-elev2); color: var(--text); border: 1px solid var(--border); }
-.btn-secondary:not(:disabled):hover { background: var(--border); }
-.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-.btn-ghost:not(:disabled):hover { background: var(--bg-elev2); color: var(--text); }
-.btn-danger { background: var(--bad); color: #fff; }
-.btn-danger:not(:disabled):hover { background: color-mix(in srgb, var(--bad) 82%, black); }
+.btn:not(:disabled):hover {
+  background: var(--accent-2);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background: var(--bg-elev2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:not(:disabled):hover {
+  background: var(--border);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:not(:disabled):hover {
+  background: var(--bg-elev2);
+  color: var(--text);
+}
+.btn-danger {
+  background: var(--bad);
+  color: #fff;
+}
+.btn-danger:not(:disabled):hover {
+  background: color-mix(in srgb, var(--bad) 82%, black);
+}
 
 /* --- Main row: tag panel (left) + dropzone/results/progress column --- */
 .main-row {
@@ -181,9 +221,18 @@ html, body {
   padding: 14px 16px 10px;
   border-bottom: 1px solid var(--border);
 }
-.tag-panel-head h2 { margin: 0; font-size: 14px; }
-.tag-panel-head .muted { font-size: 11.5px; }
-.tag-panel-head-right { display: flex; align-items: center; gap: 8px; }
+.tag-panel-head h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.tag-panel-head .muted {
+  font-size: 11.5px;
+}
+.tag-panel-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 /* Closing the panel just deselects every row (`onClose` in TagPanel.tsx) —
    there's otherwise no way back to the empty state once a selection opens
    it. Uses IconButton (`.icon-btn`, variant "close" — see its definition
@@ -207,7 +256,9 @@ html, body {
   justify-content: center;
   gap: 6px;
 }
-.tag-lookup-icon { flex: none; }
+.tag-lookup-icon {
+  flex: none;
+}
 
 /* Lives between `.tag-panel-head` and the padded, scrollable
    `.tag-panel-body` — a direct child of `.tag-panel` itself, not nested
@@ -229,7 +280,9 @@ html, body {
   overflow: hidden;
   background: var(--bg-elev2);
   border-bottom: 1px solid var(--border);
-  transition: background 0.15s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
 }
 /* Drop target for replacing the selection's cover — see `useNativeDrop`,
    driven by the webview's native drag-drop position events (HTML5 dragover
@@ -256,7 +309,10 @@ html, body {
   color: #fff;
   pointer-events: none;
 }
-.tag-cover-overlay svg { width: 32px; height: 32px; }
+.tag-cover-overlay svg {
+  width: 32px;
+  height: 32px;
+}
 .tag-cover-nav {
   position: absolute;
   top: 50%;
@@ -274,9 +330,15 @@ html, body {
   align-items: center;
   justify-content: center;
 }
-.tag-cover-nav:hover { background: rgba(0, 0, 0, 0.75); }
-.tag-cover-prev { left: 6px; }
-.tag-cover-next { right: 6px; }
+.tag-cover-nav:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+.tag-cover-prev {
+  left: 6px;
+}
+.tag-cover-next {
+  right: 6px;
+}
 /* Width fills the panel; height follows naturally from the image's own
    aspect ratio (no cropping) — deliberately not object-fit: cover, so a
    non-square cover isn't chopped down to a square. */
@@ -328,8 +390,12 @@ html, body {
    copies are pixel-for-pixel aligned at that point, so the loop is seamless
    rather than visibly "jumping" back to the start. */
 @keyframes tag-marquee-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 /* Groups the delete/extract buttons with the role picker so `.tag-cover-info`
    still has just two flex children (the marquee and this) — with `justify-
@@ -376,9 +442,19 @@ html, body {
   color: var(--muted);
 }
 
-.tag-fields { display: flex; flex-direction: column; gap: 11px; }
-.tag-field-row { display: flex; gap: 10px; }
-.tag-field-row > .tag-field-narrow { flex: 1; min-width: 0; }
+.tag-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.tag-field-row {
+  display: flex;
+  gap: 10px;
+}
+.tag-field-row > .tag-field-narrow {
+  flex: 1;
+  min-width: 0;
+}
 .tag-field-head {
   display: flex;
   align-items: baseline;
@@ -386,7 +462,10 @@ html, body {
   gap: 6px;
   margin-bottom: 4px;
 }
-.tag-field-head span:first-child { font-size: 11.5px; color: var(--muted); }
+.tag-field-head span:first-child {
+  font-size: 11.5px;
+  color: var(--muted);
+}
 .tag-field-badge {
   font-size: 9.5px;
   font-weight: 600;
@@ -420,9 +499,19 @@ html, body {
   color: var(--muted);
   font-style: italic;
 }
-.tag-field-pair { display: flex; align-items: center; gap: 5px; }
-.tag-field-pair input { min-width: 0; text-align: center; }
-.tag-field-sep { color: var(--muted); flex: none; }
+.tag-field-pair {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tag-field-pair input {
+  min-width: 0;
+  text-align: center;
+}
+.tag-field-sep {
+  color: var(--muted);
+  flex: none;
+}
 .tag-field-checkbox {
   display: flex;
   align-items: center;
@@ -437,7 +526,9 @@ html, body {
   padding: 12px 16px;
   border-top: 1px solid var(--border);
 }
-.tag-panel-actions .btn { flex: 1; }
+.tag-panel-actions .btn {
+  flex: 1;
+}
 
 /* --- Drop zone (fills all remaining space) --- */
 .dropzone {
@@ -450,20 +541,41 @@ html, body {
   border-radius: 14px;
   background: var(--bg-elev);
   text-align: center;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 .dropzone.drag-over {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, var(--bg-elev));
 }
-.dropzone-inner { max-width: 580px; padding: 26px; }
-.drop-icon { color: var(--accent); }
-.drop-icon svg { width: 44px; height: 44px; }
-.dropzone p { margin: 8px 0; font-size: 15px; }
-.muted { color: var(--muted); font-size: 12.5px; }
+.dropzone-inner {
+  max-width: 580px;
+  padding: 26px;
+}
+.drop-icon {
+  color: var(--accent);
+}
+.drop-icon svg {
+  width: 44px;
+  height: 44px;
+}
+.dropzone p {
+  margin: 8px 0;
+  font-size: 15px;
+}
+.muted {
+  color: var(--muted);
+  font-size: 12.5px;
+}
 
 /* --- Progress --- */
-.progress { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+.progress {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
 .progress-label {
   font-size: 12.5px;
   color: var(--muted);
@@ -488,11 +600,26 @@ html, body {
 }
 /* The cancel "✕" is `.icon-btn` (IconButton, variant "close") — shared
    definition further down. */
-.progress-track { height: 8px; background: var(--bg-elev2); border-radius: 6px; overflow: hidden; }
-.progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s ease; }
+.progress-track {
+  height: 8px;
+  background: var(--bg-elev2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
 
 /* --- Results --- */
-.results { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.results {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 .results-head {
   display: flex;
   align-items: center;
@@ -500,8 +627,16 @@ html, body {
   margin-bottom: 10px;
   gap: 12px;
 }
-.summary { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.count { font-weight: 600; font-size: 14px; }
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.count {
+  font-weight: 600;
+  font-size: 14px;
+}
 .chip {
   font-size: 11.5px;
   padding: 3px 9px;
@@ -510,13 +645,27 @@ html, body {
   border: 1px solid var(--border);
 }
 /* Summary chips use the same per-detection colours as the row tags. */
-.chip.v-clean { color: var(--clean); }
-.chip.v-upscaled { color: var(--upscaled); }
-.chip.v-upsampled { color: var(--upsampled); }
-.chip.v-transcoded { color: var(--transcoded); }
-.chip.v-suspected { color: var(--transcoded); }
-.chip.v-bad { color: var(--bad); }
-.chip.v-muted { color: var(--muted); }
+.chip.v-clean {
+  color: var(--clean);
+}
+.chip.v-upscaled {
+  color: var(--upscaled);
+}
+.chip.v-upsampled {
+  color: var(--upsampled);
+}
+.chip.v-transcoded {
+  color: var(--transcoded);
+}
+.chip.v-suspected {
+  color: var(--transcoded);
+}
+.chip.v-bad {
+  color: var(--bad);
+}
+.chip.v-muted {
+  color: var(--muted);
+}
 /* `.results-meta-path` (not `.results-meta` itself) carries the ellipsis
    truncation and `min-width: 0` — the same split as `.tag-cover-info`/
    `.tag-marquee`, and for the same reason: the icon button next to it is a
@@ -544,10 +693,15 @@ html, body {
   border-radius: 10px;
   background: var(--bg-elev);
 }
-table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12.5px;
+}
 thead th {
   position: sticky;
   top: 0;
+  z-index: 3;
   background: var(--bg-elev2);
   text-align: left;
   padding: 9px 12px;
@@ -556,17 +710,38 @@ thead th {
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
-tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: var(--row-hover); }
+tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+tbody tr:hover {
+  background: var(--row-hover);
+}
 /* Table-wide: rows are dragged/selected by clicking, never by selecting
    text — `-webkit-user-select` is required in addition to the unprefixed
    property for this to actually take effect in Tauri's WKWebView. */
-table { -webkit-user-select: none; user-select: none; }
-tbody tr { cursor: grab; }
-tbody tr.selected { background: color-mix(in srgb, var(--accent) 16%, var(--bg-elev)); }
-tbody tr.selected:hover { background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev)); }
-.fname { max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+table {
+  -webkit-user-select: none;
+  user-select: none;
+}
+tbody tr {
+  cursor: grab;
+}
+tbody tr.selected {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-elev));
+}
+tbody tr.selected:hover {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev));
+}
+.fname {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Manual row reordering (mousedown-based, see main.ts for why). `.pressing`
    gives immediate feedback the instant the mouse goes down — before the
@@ -582,7 +757,9 @@ tbody tr.pressing {
   box-shadow:
     0 10px 22px rgba(0, 0, 0, 0.35),
     0 3px 8px rgba(0, 0, 0, 0.28);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
 }
 tbody tr.dragging {
   cursor: grabbing;
@@ -593,8 +770,12 @@ tbody tr.dragging {
    land between. Applied to the `td`s rather than the `tr` itself: box-shadow
    and borders on `<tr>` render unreliably across table layout engines
    (notably in Tauri's WKWebView), `td` borders don't have that problem. */
-tbody tr.drop-before td { border-top: 3px solid var(--text); }
-tbody tr.drop-after td { border-bottom: 3px solid var(--text); }
+tbody tr.drop-before td {
+  border-top: 3px solid var(--text);
+}
+tbody tr.drop-after td {
+  border-bottom: 3px solid var(--text);
+}
 
 /* Floating "layer" that follows the cursor while a row is being dragged — a
    semi-transparent snapshot of the row, positioned via inline `left`/`top`
@@ -614,8 +795,12 @@ tbody tr.drop-after td { border-bottom: 3px solid var(--text); }
     0 14px 30px rgba(0, 0, 0, 0.4),
     0 4px 10px rgba(0, 0, 0, 0.3);
 }
-.row-drag-ghost table { margin: 0; }
-.row-drag-ghost td { border-bottom: none !important; }
+.row-drag-ghost table {
+  margin: 0;
+}
+.row-drag-ghost td {
+  border-bottom: none !important;
+}
 /* Shown under the stacked rows when a multi-row drag has more selected rows
    than the ghost bothers to render (see GHOST_STACK_CAP) — a plain summary
    line, not a badge, so it reads as part of the same floating list. */
@@ -648,16 +833,26 @@ tbody tr.drop-after td { border-bottom: 3px solid var(--text); }
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
-.icon-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 /* "neutral" (default, no modifier class): reveal, extract cover — just does
    something, turns accent blue on hover. */
-.icon-btn:hover { background: var(--bg-elev2); color: var(--accent); }
+.icon-btn:hover {
+  background: var(--bg-elev2);
+  color: var(--accent);
+}
 /* "close": dismiss/stop, not destructive — panel close, cancel task. Red
    text on hover, no background tint (that tint is reserved for things that
    actually delete data, right below). */
-.icon-btn-close:hover { color: var(--bad); }
+.icon-btn-close:hover {
+  color: var(--bad);
+}
 /* "danger": deletes something — muted at rest like everything else, but the
    hover gets a red tint on the background too, not just the icon, since
    this one hover state has to read as more consequential than "close"'s. */
@@ -679,12 +874,24 @@ tbody tr.drop-after td { border-bottom: 3px solid var(--text); }
 }
 
 /* Reveal-in-file-browser button column. */
-th:first-child { width: 32px; }
-td.reveal { width: 32px; padding: 4px 4px 4px 10px; text-align: center; }
+th:first-child {
+  width: 32px;
+}
+td.reveal {
+  width: 32px;
+  padding: 4px 4px 4px 10px;
+  text-align: center;
+}
 
 /* Thumbnail / hover-to-preview column, right after the reveal button */
-th:nth-child(2) { width: 32px; }
-td.thumb { width: 32px; padding: 4px; text-align: center; }
+th:nth-child(2) {
+  width: 32px;
+}
+td.thumb {
+  width: 32px;
+  padding: 4px;
+  text-align: center;
+}
 .play-btn {
   position: relative;
   width: 24px;
@@ -700,9 +907,22 @@ td.thumb { width: 32px; padding: 4px; text-align: center; }
   align-items: center;
   justify-content: center;
 }
-.play-btn.playing { outline: 2px solid var(--accent); outline-offset: 1px; }
-.thumb-img { width: 24px; height: 24px; object-fit: cover; display: block; border-radius: 4px; }
-.thumb-placeholder { display: flex; align-items: center; justify-content: center; }
+.play-btn.playing {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.thumb-img {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+.thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .play-overlay {
   position: absolute;
   inset: 0;
@@ -718,14 +938,22 @@ td.thumb { width: 32px; padding: 4px; text-align: center; }
    "now playing" indicator, not just a hover affordance); every other row
    only reveals its overlay (a plain Play icon) on hover. */
 .play-btn:hover .play-overlay,
-.play-btn.playing .play-overlay { opacity: 1; }
+.play-btn.playing .play-overlay {
+  opacity: 1;
+}
 
 /* Two overlay states for a playing row: the bars at rest, the Stop icon on
    hover — swapped with `display` rather than unmounted, so hovering never
    restarts the bars' animation. */
-.play-overlay-hover { display: none; }
-.play-btn.playing:hover .play-overlay-idle { display: none; }
-.play-btn.playing:hover .play-overlay-hover { display: flex; }
+.play-overlay-hover {
+  display: none;
+}
+.play-btn.playing:hover .play-overlay-idle {
+  display: none;
+}
+.play-btn.playing:hover .play-overlay-hover {
+  display: flex;
+}
 
 /* Heights are set inline per bar from real playback loudness (see
    `LiveEqualizerBars`), not a CSS keyframe loop — the transition is what
@@ -752,7 +980,11 @@ td.thumb { width: 32px; padding: 4px; text-align: center; }
    (red only on hover — see the shared IconButton definition above; this is
    the one deliberate exception from the cover panel's always-red delete,
    since a whole table's worth of permanently-red icons would be noise). */
-td.rowdel { width: 32px; padding: 4px 10px 4px 4px; text-align: center; }
+td.rowdel {
+  width: 32px;
+  padding: 4px 10px 4px 4px;
+  text-align: center;
+}
 
 /* (The old single-verdict cell was replaced by the per-detection tags below.) */
 
@@ -765,7 +997,10 @@ td.size {
 }
 
 /* Detections column: one or more small tags */
-td.detections { white-space: normal; min-width: 130px; }
+td.detections {
+  white-space: normal;
+  min-width: 130px;
+}
 .tag {
   display: inline-block;
   padding: 2px 8px;
@@ -782,14 +1017,36 @@ td.detections { white-space: normal; min-width: 130px; }
    Transcoded = red. "Transcoded?" (suspected) reuses the transcoded hue with a
    fainter fill — same family, weaker claim. Colours come from the theme
    variables, so light mode gets legible equivalents automatically. */
-.tag.t-clean       { color: var(--clean);      background: color-mix(in srgb, var(--clean) 14%, transparent);      border-color: color-mix(in srgb, var(--clean) 42%, transparent); }
-.tag.t-upscaled    { color: var(--upscaled);   background: color-mix(in srgb, var(--upscaled) 14%, transparent);   border-color: color-mix(in srgb, var(--upscaled) 42%, transparent); }
-.tag.t-upsampled   { color: var(--upsampled);  background: color-mix(in srgb, var(--upsampled) 14%, transparent);  border-color: color-mix(in srgb, var(--upsampled) 42%, transparent); }
-.tag.t-transcoded  { color: var(--transcoded); background: color-mix(in srgb, var(--transcoded) 14%, transparent); border-color: color-mix(in srgb, var(--transcoded) 42%, transparent); }
-.tag.t-suspected   { color: var(--transcoded); background: color-mix(in srgb, var(--transcoded) 8%, transparent);  border-color: color-mix(in srgb, var(--transcoded) 28%, transparent); }
+.tag.t-clean {
+  color: var(--clean);
+  background: color-mix(in srgb, var(--clean) 14%, transparent);
+  border-color: color-mix(in srgb, var(--clean) 42%, transparent);
+}
+.tag.t-upscaled {
+  color: var(--upscaled);
+  background: color-mix(in srgb, var(--upscaled) 14%, transparent);
+  border-color: color-mix(in srgb, var(--upscaled) 42%, transparent);
+}
+.tag.t-upsampled {
+  color: var(--upsampled);
+  background: color-mix(in srgb, var(--upsampled) 14%, transparent);
+  border-color: color-mix(in srgb, var(--upsampled) 42%, transparent);
+}
+.tag.t-transcoded {
+  color: var(--transcoded);
+  background: color-mix(in srgb, var(--transcoded) 14%, transparent);
+  border-color: color-mix(in srgb, var(--transcoded) 42%, transparent);
+}
+.tag.t-suspected {
+  color: var(--transcoded);
+  background: color-mix(in srgb, var(--transcoded) 8%, transparent);
+  border-color: color-mix(in srgb, var(--transcoded) 28%, transparent);
+}
 
 /* Any cell/element that carries an explanatory tooltip */
-.has-tip { cursor: help; }
+.has-tip {
+  cursor: help;
+}
 
 /* Verified quality badge (Hi-Res / DSD64...) — custom chip, gold accent */
 .qbadge {
@@ -804,9 +1061,13 @@ td.detections { white-space: normal; min-width: 130px; }
   background: color-mix(in srgb, #e6b93c 22%, transparent);
   border: 1px solid color-mix(in srgb, #e6b93c 55%, transparent);
 }
-:root[data-theme="dark"] .qbadge { color: #e9c96a; }
+:root[data-theme="dark"] .qbadge {
+  color: #e9c96a;
+}
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .qbadge { color: #e9c96a; }
+  :root:not([data-theme]) .qbadge {
+    color: #e9c96a;
+  }
 }
 .qbadge.q-unk {
   color: var(--muted);
@@ -814,11 +1075,24 @@ td.detections { white-space: normal; min-width: 130px; }
   border-color: var(--border);
 }
 
-.c-ok { color: var(--ok); font-weight: 600; }
-.c-bad { color: var(--bad); font-weight: 600; }
-.c-mid { color: var(--mid); font-weight: 600; }
-.c-warn { color: var(--warn); }
-.c-muted { color: var(--muted); }
+.c-ok {
+  color: var(--ok);
+  font-weight: 600;
+}
+.c-bad {
+  color: var(--bad);
+  font-weight: 600;
+}
+.c-mid {
+  color: var(--mid);
+  font-weight: 600;
+}
+.c-warn {
+  color: var(--warn);
+}
+.c-muted {
+  color: var(--muted);
+}
 
 /* --- Toast --- */
 .toast {
@@ -835,8 +1109,12 @@ td.detections { white-space: normal; min-width: 130px; }
   box-shadow: 0 8px 30px var(--shadow);
   max-width: 80%;
 }
-.toast.error { border-color: var(--bad); }
-.toast.info { border-color: var(--accent); }
+.toast.error {
+  border-color: var(--bad);
+}
+.toast.info {
+  border-color: var(--accent);
+}
 
 /* Busy overlay shown when files are dragged over during analysis */
 .drop-guard {
@@ -860,7 +1138,11 @@ td.detections { white-space: normal; min-width: 130px; }
   padding: 16px 22px;
   box-shadow: 0 10px 34px var(--shadow);
 }
-.drop-guard-box p { margin: 0; font-weight: 600; font-size: 13.5px; }
+.drop-guard-box p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 13.5px;
+}
 .spinner {
   flex: none;
   width: 22px;
@@ -870,7 +1152,11 @@ td.detections { white-space: normal; min-width: 130px; }
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* Cover lightbox — click the tag panel's artwork to check it at full size,
    with the same info line plus the picture's role (Front cover, etc.). */
@@ -934,7 +1220,9 @@ td.detections { white-space: normal; min-width: 130px; }
   justify-content: center;
   box-shadow: 0 4px 12px var(--shadow);
 }
-.cover-modal-close:hover { background: var(--bg-elev2); }
+.cover-modal-close:hover {
+  background: var(--bg-elev2);
+}
 
 /* Extended-tags link in the panel + its pop-in — everything lofty read that
    isn't one of the common fields above (ISRC, BPM, ReplayGain, custom
@@ -949,8 +1237,13 @@ td.detections { white-space: normal; min-width: 130px; }
   font-weight: 600;
   cursor: pointer;
 }
-.tag-extended-btn:hover { text-decoration: underline; }
-.tag-extended-count { color: var(--muted); font-weight: 400; }
+.tag-extended-btn:hover {
+  text-decoration: underline;
+}
+.tag-extended-count {
+  color: var(--muted);
+  font-weight: 400;
+}
 
 .extended-tags-inner {
   width: min(480px, 88vw);
@@ -962,7 +1255,10 @@ td.detections { white-space: normal; min-width: 130px; }
   box-shadow: 0 20px 50px var(--shadow);
   align-items: stretch;
 }
-.extended-tags-title { margin: 0 0 4px; font-size: 14px; }
+.extended-tags-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
 .extended-tags-body {
   overflow-y: auto;
   display: flex;
@@ -976,16 +1272,29 @@ td.detections { white-space: normal; min-width: 130px; }
   border-bottom: 1px solid var(--border);
   font-size: 12.5px;
 }
-.ext-row:last-child { border-bottom: none; }
+.ext-row:last-child {
+  border-bottom: none;
+}
 .ext-key {
   flex: none;
   width: 40%;
   color: var(--muted);
   word-break: break-word;
 }
-.ext-value { flex: 1; min-width: 0; word-break: break-word; }
-.ext-value.ext-mixed { color: var(--muted); font-style: italic; }
-.extended-tags-empty { color: var(--muted); font-size: 12.5px; padding: 8px 0; }
+.ext-value {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.ext-value.ext-mixed {
+  color: var(--muted);
+  font-style: italic;
+}
+.extended-tags-empty {
+  color: var(--muted);
+  font-size: 12.5px;
+  padding: 8px 0;
+}
 
 /* Online lookup (MusicBrainz + Discogs) — "Search online" button's pop-in.
    Reuses the extended-tags pop-in's frame (`.extended-tags-inner`) sized a
@@ -1007,7 +1316,10 @@ td.detections { white-space: normal; min-width: 130px; }
   min-height: 0;
   overflow-y: auto;
 }
-.lookup-search-row { display: flex; gap: 8px; }
+.lookup-search-row {
+  display: flex;
+  gap: 8px;
+}
 .lookup-search-row input {
   flex: 1;
   min-width: 0;
@@ -1018,7 +1330,10 @@ td.detections { white-space: normal; min-width: 130px; }
   font-size: 13px;
   color: var(--text);
 }
-.lookup-search-row input:focus { outline: none; border-color: var(--accent); }
+.lookup-search-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 .lookup-settings {
   font-size: 11.5px;
   color: var(--muted);
@@ -1026,8 +1341,14 @@ td.detections { white-space: normal; min-width: 130px; }
   border-radius: 8px;
   padding: 6px 10px;
 }
-.lookup-settings summary { cursor: pointer; font-weight: 600; color: var(--text); }
-.lookup-settings p { margin: 6px 0; }
+.lookup-settings summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+.lookup-settings p {
+  margin: 6px 0;
+}
 .lookup-settings input {
   width: 100%;
   background: var(--bg-elev2);
@@ -1037,15 +1358,33 @@ td.detections { white-space: normal; min-width: 130px; }
   font-size: 12px;
   color: var(--text);
 }
-.lookup-status { margin: 0; display: flex; align-items: center; gap: 8px; }
-.lookup-status.lookup-status-error { color: var(--bad); }
-.spinner-sm { width: 13px; height: 13px; border-width: 2px; flex: none; }
-.lookup-results { display: flex; flex-direction: column; gap: 6px; }
+.lookup-status {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lookup-status.lookup-status-error {
+  color: var(--bad);
+}
+.spinner-sm {
+  width: 13px;
+  height: 13px;
+  border-width: 2px;
+  flex: none;
+}
+.lookup-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 /* Loading overlay covering the whole pop-in rather than a discreet line of
    status text at the top — a fetch that fails (or is slow) was easy to miss
    up there, which read as "clicking a result does nothing". */
-.lookup-inner { position: relative; }
+.lookup-inner {
+  position: relative;
+}
 .lookup-loading {
   position: absolute;
   inset: 0;
@@ -1074,9 +1413,14 @@ td.detections { white-space: normal; min-width: 130px; }
   cursor: pointer;
   font-size: 12.5px;
   color: var(--text);
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
-.lookup-candidate:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--bg-elev2)); }
+.lookup-candidate:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elev2));
+}
 .lookup-candidate-source {
   flex: none;
   font-size: 9.5px;
@@ -1088,13 +1432,46 @@ td.detections { white-space: normal; min-width: 130px; }
   border-radius: 6px;
   padding: 2px 6px;
 }
-.lookup-candidate-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.lookup-candidate-title { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lookup-candidate-artist { display: block; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lookup-candidate-meta { flex: none; color: var(--muted); font-size: 11px; }
-.lookup-back-btn { align-self: flex-start; flex: none; }
-.lookup-detail-body { display: flex; flex-direction: column; gap: 12px; }
-.lookup-detail-head { display: flex; gap: 12px; align-items: flex-start; }
+.lookup-candidate-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.lookup-candidate-title {
+  display: block;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lookup-candidate-artist {
+  display: block;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lookup-candidate-meta {
+  flex: none;
+  color: var(--muted);
+  font-size: 11px;
+}
+.lookup-back-btn {
+  align-self: flex-start;
+  flex: none;
+}
+.lookup-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lookup-detail-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
 .lookup-detail-cover {
   flex: none;
   width: 72px;
@@ -1104,11 +1481,28 @@ td.detections { white-space: normal; min-width: 130px; }
   border: 1px solid var(--border);
   background: var(--bg-elev2);
 }
-.lookup-detail-meta { min-width: 0; }
-.lookup-detail-title { font-weight: 600; font-size: 13.5px; margin: 0 0 3px; word-break: break-word; }
-.lookup-detail-artist { color: var(--muted); font-size: 12px; margin: 0; }
-.lookup-note { color: var(--muted); font-size: 11px; margin: 0; }
-.lookup-note-match { color: var(--accent); }
+.lookup-detail-meta {
+  min-width: 0;
+}
+.lookup-detail-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  margin: 0 0 3px;
+  word-break: break-word;
+}
+.lookup-detail-artist {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0;
+}
+.lookup-note {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0;
+}
+.lookup-note-match {
+  color: var(--accent);
+}
 /* No `gap` here on purpose: a flex gap would show the container's own
    background as a hairline above each row, which reads as a broken row
    separator once a row is highlighted on hover. Rows carry their own
@@ -1135,20 +1529,51 @@ td.detections { white-space: normal; min-width: 130px; }
   color: var(--text);
   cursor: pointer;
 }
-.lookup-track:last-child { border-bottom: none; }
-.lookup-track:hover { background: var(--bg-elev2); }
-.lookup-track.selected { background: color-mix(in srgb, var(--accent) 16%, var(--bg-elev)); }
-.lookup-track:disabled { opacity: 0.6; cursor: default; }
-.lookup-track:disabled:hover { background: none; }
-.lookup-track-pos { flex: none; width: 26px; color: var(--muted); text-align: right; }
-.lookup-track-title { flex: 1; min-width: 0; word-break: break-word; }
-.lookup-detail-actions { display: flex; }
-.lookup-detail-actions .btn { flex: 1; }
+.lookup-track:last-child {
+  border-bottom: none;
+}
+.lookup-track:hover {
+  background: var(--bg-elev2);
+}
+.lookup-track.selected {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-elev));
+}
+.lookup-track:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.lookup-track:disabled:hover {
+  background: none;
+}
+.lookup-track-pos {
+  flex: none;
+  width: 26px;
+  color: var(--muted);
+  text-align: right;
+}
+.lookup-track-title {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.lookup-detail-actions {
+  display: flex;
+}
+.lookup-detail-actions .btn {
+  flex: 1;
+}
 
 /* Playlist export format pop-in — a tiny choice step before the native save
    dialog opens, since that dialog can't host a custom radio group itself. */
-.playlist-format-inner { width: min(360px, 88vw); }
-.playlist-format-options { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 4px; }
+.playlist-format-inner {
+  width: min(360px, 88vw);
+}
+.playlist-format-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 4px;
+}
 .playlist-format-option {
   display: flex;
   align-items: flex-start;
@@ -1157,9 +1582,13 @@ td.detections { white-space: normal; min-width: 130px; }
   border: 1px solid var(--border);
   border-radius: 9px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
-.playlist-format-option:hover { border-color: var(--accent); }
+.playlist-format-option:hover {
+  border-color: var(--accent);
+}
 /* `:has()` covers modern engines; `.selected` (toggled in main.ts on
    change) is the fallback for anything older. */
 .playlist-format-option:has(input:checked),
@@ -1167,11 +1596,27 @@ td.detections { white-space: normal; min-width: 130px; }
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
-.playlist-format-option input { margin-top: 3px; flex: none; }
-.playlist-format-option span { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; }
-.playlist-format-option small { font-size: 11px; }
-.playlist-format-actions { display: flex; gap: 8px; margin-top: 4px; }
-.playlist-format-actions .btn { flex: 1; }
+.playlist-format-option input {
+  margin-top: 3px;
+  flex: none;
+}
+.playlist-format-option span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12.5px;
+}
+.playlist-format-option small {
+  font-size: 11px;
+}
+.playlist-format-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.playlist-format-actions .btn {
+  flex: 1;
+}
 
 /* Generic confirm/cancel pop-in — see ConfirmDialog. */
 /* `.cover-modal-inner` (the shared base every Modal instance gets) is
@@ -1188,8 +1633,21 @@ td.detections { white-space: normal; min-width: 130px; }
   box-shadow: 0 20px 50px var(--shadow);
   align-items: stretch;
 }
-.confirm-dialog-message { margin: 4px 0 0; font-size: 13px; color: var(--text); line-height: 1.5; }
-.confirm-dialog-actions { display: flex; gap: 8px; margin-top: 16px; }
-.confirm-dialog-actions .btn { flex: 1; }
+.confirm-dialog-message {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.confirm-dialog-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.confirm-dialog-actions .btn {
+  flex: 1;
+}
 
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
