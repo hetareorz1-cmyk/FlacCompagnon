@@ -110,16 +110,22 @@ pub async fn read_cover_image(path: String) -> Result<core::tags::CoverArt, Stri
 }
 
 /// Write a cover already in hand (as base64 — nothing is re-read from any tag)
-/// out as a plain "cover.<ext>" file in `dir`, backing the tag panel's
-/// "extract this cover" button — the same convention Mp3tag and foobar2000
-/// use. Overwrites anything already at that path. Returns the path written.
+/// out as a plain file in `dir`, backing the tag panel's "extract cover(s)"
+/// button. `index` (1-based) picks the name: the first cover gets the classic
+/// "cover.<ext>" Mp3tag and foobar2000 use, any cover after it gets
+/// "cover-<n>.<ext>" — a selection whose files hold several genuinely
+/// different covers extracts all of them in one go (see the frontend's
+/// `extractCovers`), and without numbering, the second write would silently
+/// overwrite the first at the same fixed name. Overwrites anything already at
+/// the resulting path. Returns the path written.
 #[tauri::command]
 pub async fn extract_cover_art(
     dir: String,
     mime: String,
     data_base64: String,
+    index: u32,
 ) -> Result<String, String> {
-    let dest = PathBuf::from(dir).join(format!("cover.{}", cover_extension(&mime)));
+    let dest = PathBuf::from(dir).join(cover_file_name(&mime, index));
     tauri::async_runtime::spawn_blocking(move || {
         core::tags::write_cover_file(&dest, &data_base64)
             .map(|_| dest.to_string_lossy().to_string())
@@ -127,6 +133,18 @@ pub async fn extract_cover_art(
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+/// The file name `extract_cover_art` writes to: "cover.<ext>" for the first
+/// cover in a selection (index 1, or the degenerate 0), "cover-<n>.<ext>" for
+/// every one after it — see that command's doc comment for why.
+fn cover_file_name(mime: &str, index: u32) -> String {
+    let ext = cover_extension(mime);
+    if index <= 1 {
+        format!("cover.{ext}")
+    } else {
+        format!("cover-{index}.{ext}")
+    }
 }
 
 /// File extension for an image MIME type.
@@ -177,5 +195,24 @@ mod tests {
                 "{mime} produced {ext}"
             );
         }
+    }
+
+    #[test]
+    fn first_cover_keeps_the_classic_name() {
+        assert_eq!(cover_file_name("image/jpeg", 1), "cover.jpg");
+        // 0 shouldn't occur (indices are 1-based), but degrading to the
+        // classic name rather than a nonsensical "cover-0.jpg" is the safer
+        // failure mode if it ever does.
+        assert_eq!(cover_file_name("image/jpeg", 0), "cover.jpg");
+    }
+
+    #[test]
+    fn later_covers_get_a_numbered_name_so_they_do_not_collide() {
+        assert_eq!(cover_file_name("image/png", 2), "cover-2.png");
+        assert_eq!(cover_file_name("image/png", 5), "cover-5.png");
+        assert_ne!(
+            cover_file_name("image/png", 1),
+            cover_file_name("image/png", 2)
+        );
     }
 }

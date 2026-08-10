@@ -37,8 +37,12 @@ export interface CoverArtProps {
   onRoleChange: (cover: CoverArtData, pictureType: string) => void;
   /// Removes the cover from every selected file.
   onDelete: () => void;
-  /// Writes the currently shown cover next to the audio file(s).
-  onExtract: (cover: CoverArtData) => void;
+  /// Extracts every distinct cover in `covers`, not just the one currently
+  /// shown — a selection whose files don't all share the exact same image
+  /// needs all of them written, or clicking through the carousel and
+  /// extracting each in turn would silently overwrite the last one with the
+  /// next (see extractCoverArt's numbered-filename fix for this).
+  onExtract: (covers: CoverArtData[]) => void;
 }
 
 function infoLine(cover: CoverArtData, multiple: boolean): string {
@@ -144,8 +148,12 @@ export function CoverArt({
           <div className="tag-cover-controls">
             <IconButton
               icon={<Upload size={14} strokeWidth={1.6} />}
-              title="Extract this cover next to the audio file"
-              onClick={() => onExtract(cover)}
+              title={
+                multiple
+                  ? `Extract all ${covers.length} covers next to the audio files`
+                  : "Extract this cover next to the audio file"
+              }
+              onClick={() => onExtract(covers)}
             />
             <IconButton
               icon={<Trash2 size={14} strokeWidth={1.6} />}

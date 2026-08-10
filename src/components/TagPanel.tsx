@@ -135,17 +135,29 @@ export function TagPanel({
     [tagSets.length, editor],
   );
 
-  // Writes the currently shown cover as a plain file next to the audio —
-  // "cover.<ext>" in the selection's common folder, overwriting any previous
-  // extract there (same convention as Mp3tag/foobar2000's "export cover").
-  // This is a read-only export, so it runs regardless of the `multiple`
-  // restriction that applies to relabeling.
-  const extractCover = async (cover: CoverArtData) => {
+  // Writes every distinct cover handed in as a plain file in the selection's
+  // common folder — "cover.<ext>" for the first, "cover-2.<ext>", "cover-3
+  // .<ext>", ... for the rest (see extractCoverArt). Previously this only
+  // ever extracted whichever cover the carousel happened to be showing, and
+  // always to the same "cover.<ext>" name — so a selection with several
+  // genuinely different covers needed one click per cover, and each one
+  // silently overwrote the last. One click now writes all of them. This is a
+  // read-only export, so it runs regardless of the `multiple` restriction
+  // that applies to relabeling.
+  const extractCovers = async (toExtract: CoverArtData[]) => {
     const dir = commonDir(selectedPaths);
-    if (!dir) return;
+    if (!dir || toExtract.length === 0) return;
     try {
-      const path = await api.extractCoverArt(dir, cover.mime, cover.data_base64);
-      onToast(`Cover saved to ${path}`);
+      const written: string[] = [];
+      for (let i = 0; i < toExtract.length; i++) {
+        const c = toExtract[i];
+        written.push(await api.extractCoverArt(dir, c.mime, c.data_base64, i + 1));
+      }
+      onToast(
+        written.length === 1
+          ? `Cover saved to ${written[0]}`
+          : `${written.length} covers saved to ${dir}`,
+      );
     } catch (e) {
       onToast(String(e), "error");
     }
@@ -197,7 +209,7 @@ export function TagPanel({
           onOpenLightbox={(covers, index) => setLightbox({ covers, index })}
           onRoleChange={editor.setCoverRole}
           onDelete={() => setDeleteCoverOpen(true)}
-          onExtract={extractCover}
+          onExtract={extractCovers}
         />
       </div>
 

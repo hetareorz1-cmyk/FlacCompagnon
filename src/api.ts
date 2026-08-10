@@ -65,10 +65,13 @@ export const readCoverImage = (path: string) =>
   invoke<CoverArt>("read_cover_image", { path });
 
 // Writes a cover (already in hand as base64 — no re-read from any tag) out as
-// a plain "cover.<ext>" file in `dir`, backing the tag panel's "extract this
-// cover" button. Returns the path actually written.
-export const extractCoverArt = (dir: string, mime: string, dataBase64: string) =>
-  invoke<string>("extract_cover_art", { dir, mime, dataBase64 });
+// a plain file in `dir`, backing the tag panel's "extract cover(s)" button.
+// `index` (1-based) picks the name: 1 gets the classic "cover.<ext>", any
+// later index gets "cover-<n>.<ext>" — so extracting every distinct cover in
+// a multi-cover selection doesn't have the second call overwrite the first.
+// Returns the path actually written.
+export const extractCoverArt = (dir: string, mime: string, dataBase64: string, index: number) =>
+  invoke<string>("extract_cover_art", { dir, mime, dataBase64, index });
 
 // Playback: single-track preview. `playTrack` returns a request id used to
 // match the `playback://finished` event to the track that was actually
