@@ -2,7 +2,9 @@
 .progress {
   background: var(--bg-elev);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  /* Same tier as .tag-panel/.dropzone/.table-wrap — this shell takes the
+     Dropzone's/results table's spot while a task is running. */
+  border-radius: var(--radius-lg);
   padding: 12px 16px;
 }
 .progress-label {
@@ -32,7 +34,7 @@
 .progress-track {
   height: 8px;
   background: var(--bg-elev2);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 .progress-bar {
@@ -60,7 +62,7 @@
   gap: 14px;
   background: var(--bg-elev);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   padding: 16px 22px;
   box-shadow: 0 10px 34px var(--shadow);
 }

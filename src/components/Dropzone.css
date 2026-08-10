@@ -6,7 +6,9 @@
   align-items: center;
   justify-content: center;
   border: 2px dashed var(--border);
-  border-radius: 14px;
+  /* Same tier as .tag-panel/.table-wrap/.progress — this box occupies the
+     exact same layout slot as those two, one at a time. */
+  border-radius: var(--radius-lg);
   background: var(--bg-elev);
   text-align: center;
   transition:

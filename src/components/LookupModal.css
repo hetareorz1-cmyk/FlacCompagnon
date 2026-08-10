@@ -27,7 +27,10 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  border-radius: 12px;
+  /* Flush against .modal-card's own edges (inset: 0, no gap), so it has to
+     match its radius exactly to look like one continuous card, not two
+     independently-curved layers. */
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--bg-elev) 82%, transparent);
   backdrop-filter: blur(1.5px);
   font-size: 12.5px;

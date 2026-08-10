@@ -3,7 +3,10 @@
   overflow: auto;
   overscroll-behavior: contain; /* don't propagate scroll / bounce to the window */
   border: 1px solid var(--border);
-  border-radius: 10px;
+  /* Same tier as .tag-panel/.dropzone/.progress — this, the Dropzone and
+     Progress take turns filling the same spot in the layout, so a mismatched
+     radius here was the most visible version of the inconsistency. */
+  border-radius: var(--radius-lg);
   background: var(--bg-elev);
 }
 table {
@@ -103,7 +106,7 @@ tbody tr.drop-after td {
   pointer-events: none;
   z-index: 1000;
   opacity: 0.88;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow:
     0 14px 30px rgba(0, 0, 0, 0.4),

@@ -41,7 +41,10 @@
   width: 272px;
   background: var(--bg-elev2);
   border: 1px solid var(--border);
-  border-radius: 7px;
+  /* --radius-lg, not the button/input tier: this field already matches the
+     tag panel's width, and now its curve too, so the two read as one pair
+     rather than the field being "just another input". */
+  border-radius: var(--radius-lg);
   /* Left room for the search icon, right room for the clear button — kept
      even while it's hidden, so text doesn't shift under it once it appears. */
   padding: 7px 26px 7px 28px;

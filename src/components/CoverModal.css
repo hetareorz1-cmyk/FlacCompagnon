@@ -1,3 +1,6 @@
+/* Neither radius here comes from the --radius-* scale on purpose: this is a
+   photo and its caption pill floating on the backdrop, not UI chrome nested
+   inside a container — there's nothing for them to stay concentric with. */
 .cover-modal-img {
   display: block;
   max-width: min(80vw, 640px);
@@ -13,6 +16,6 @@
   color: var(--text);
   background: var(--bg-elev);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 20px; /* pill: fully rounded ends, like .chip */
   padding: 5px 14px;
 }

@@ -1,7 +1,13 @@
 .tag {
-  display: inline-block;
+  /* inline-flex + line-height: 1, not inline-block: an inline-block's own
+     text still centers against the *surrounding line's* baseline metrics,
+     not against its own padding box, which is what was reading as the label
+     sitting 1-2px off-centre. Flex centers it against its own box instead. */
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 600;
   margin: 1px 2px 1px 0;
@@ -44,9 +50,12 @@
    (padding, radius, size, weight, margin), gold accent kept as its own
    colour rather than one of the detection colours. */
 .qbadge {
-  display: inline-block;
+  /* Same inline-flex + line-height: 1 fix as `.tag`, for the same reason. */
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 600;
   margin: 1px 2px 1px 0;

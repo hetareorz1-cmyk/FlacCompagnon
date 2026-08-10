@@ -4,7 +4,9 @@
   height: 24px;
   padding: 0;
   border: none;
-  border-radius: 5px;
+  /* Same tier as .icon-btn — same "small square button in a row" role, was a
+     stray 5px next to icon-btn's 6px. */
+  border-radius: var(--radius-sm);
   background: var(--bg-elev2);
   color: var(--muted);
   cursor: pointer;
@@ -22,7 +24,10 @@
   height: 24px;
   object-fit: cover;
   display: block;
-  border-radius: 4px;
+  /* Flush inside .play-btn with no gap, so it's actually the button's own
+     overflow:hidden clip that shows — same radius keeps that clip and this
+     value from silently drifting apart again. */
+  border-radius: var(--radius-sm);
 }
 .thumb-placeholder {
   display: flex;

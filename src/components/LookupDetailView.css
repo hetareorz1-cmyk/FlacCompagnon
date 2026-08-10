@@ -20,7 +20,7 @@
   width: 72px;
   height: 72px;
   object-fit: cover;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--bg-elev2);
 }
@@ -56,7 +56,7 @@
   max-height: 260px;
   overflow-y: auto;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 .lookup-track {
   display: flex;

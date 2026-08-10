@@ -96,6 +96,29 @@ The split is deliberate: anything that can be tested without a GUI belongs in
   markup also matches. Name classes after the component that owns them
   (`tag-cover-*`, `lookup-*`) to keep collisions unlikely, and do not rely on
   import order for specificity.
+- **Corner radius comes from the `--radius-*` scale in `theme.css`**
+  (`--radius-lg`/`card`/`md`/`sm`/`xs`), not a hand-picked number — a
+  one-off value is how a panel, a button and an input each end up with a
+  subtly different curve nobody chose on purpose. Pick the tier by role, not
+  by component: `--radius-lg` for a major content-area container
+  (interchangeable siblings like the tag panel, dropzone, results table and
+  progress bar shell must use the *same* one, since one replaces another in
+  the same layout slot), `--radius-card` for dialogs/pop-ins, `--radius-md`
+  for anything clickable or typeable (buttons, text inputs, selects, rows
+  inside a dialog), `--radius-sm` for small in-row controls (icon buttons,
+  tags), `--radius-xs` for tiny inline elements. A pill (`border-radius:
+  50%` of the height) or a circle are a different shape language, not a
+  missing tier — leave those as their own literal value.
+- A nested rounded element should almost never reuse its container's exact
+  radius unless it sits flush against it with no gap (an overlay with
+  `inset: 0`, an image filling its frame edge-to-edge) — then it must match
+  exactly, or the two curves visibly disagree at the edge. Otherwise it
+  should be a smaller tier. The precise relationship, for when it matters
+  enough to compute rather than just picking the next tier down: `inner
+  radius = outer radius − the gap between them`, clamped to `0` once the gap
+  is bigger than the outer radius. (Source: [How to calculate the
+  border-radius of nested
+  elements](https://douglasmoura.dev/how-to-calculate-the-border-radius-of-nested-elements).)
 
 ### index.html
 

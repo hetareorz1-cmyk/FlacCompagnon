@@ -47,6 +47,9 @@
   border: 1px solid var(--border);
   color: var(--text);
   padding: 11px 18px;
+  /* Deliberately its own value, not one of the --radius-* tiers: a floating
+     one-line message reads better slightly rounder than a control but well
+     short of a full pill, and it isn't a sibling of any other container. */
   border-radius: 10px;
   font-size: 13px;
   box-shadow: 0 8px 30px var(--shadow);
