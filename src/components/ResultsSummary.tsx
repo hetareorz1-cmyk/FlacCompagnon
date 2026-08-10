@@ -13,10 +13,14 @@ export interface ResultsSummaryProps {
   report: FolderReport;
   /// Deepest folder containing every listed file.
   rootPath: string;
+  /// How many rows the search filter (TopBar) currently shows; `null` when no
+  /// filter is active, in which case the count line only shows the total —
+  /// exactly as before the filter existed.
+  visibleCount: number | null;
   onToast: (msg: string, kind?: "info" | "error") => void;
 }
 
-export function ResultsSummary({ report, rootPath, onToast }: ResultsSummaryProps) {
+export function ResultsSummary({ report, rootPath, visibleCount, onToast }: ResultsSummaryProps) {
   let clean = 0;
   let upscaled = 0;
   let upsampled = 0;
@@ -52,7 +56,12 @@ export function ResultsSummary({ report, rootPath, onToast }: ResultsSummaryProp
   return (
     <div className="results-head">
       <div className="summary">
-        <span className="count">{report.files.length} files</span>{" "}
+        <span className="count">
+          {report.files.length} files
+          {visibleCount != null && (
+            <span className="count-filtered"> · {visibleCount} shown</span>
+          )}
+        </span>{" "}
         {chips
           .filter((c) => c.n > 0)
           .map((c) => (

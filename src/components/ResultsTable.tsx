@@ -17,6 +17,12 @@ export interface ResultsTableProps {
   covers: Map<string, CoverArt | null>;
   nowPlaying: { path: string; requestId: number } | null;
   selectedPaths: string[];
+  /// Which rows to actually render; `null` means "everything" (no filter
+  /// active). This only decides what's *drawn* — `files` itself stays the
+  /// full list, so `orderedPaths` (drag-reorder) and the parent's playback/
+  /// selection/export state, all of which are computed from the full list
+  /// upstream, never see a shrunk table. Hiding a row here can't lose it.
+  visiblePaths: Set<string> | null;
   onSelectRow: (path: string, ev: SelectionModifiers) => void;
   onReorder: (order: string[]) => void;
   onReveal: (path: string) => void;
@@ -29,6 +35,7 @@ export function ResultsTable({
   covers,
   nowPlaying,
   selectedPaths,
+  visiblePaths,
   onSelectRow,
   onReorder,
   onReveal,
@@ -37,6 +44,10 @@ export function ResultsTable({
 }: ResultsTableProps) {
   const tableRef = useRef<HTMLTableElement>(null);
   const orderedPaths = useMemo(() => files.map((f) => f.path), [files]);
+  const visibleFiles = useMemo(
+    () => (visiblePaths == null ? files : files.filter((f) => visiblePaths.has(f.path))),
+    [files, visiblePaths],
+  );
 
   const { dragState, onRowMouseDown, consumeClickSuppression } = useRowDrag({
     tableRef,
@@ -84,35 +95,43 @@ export function ResultsTable({
           </tr>
         </thead>
         <tbody>
-          {files.map((f) => (
-            <ResultRow
-              key={f.path}
-              file={f}
-              cover={covers.get(f.path)}
-              playing={nowPlaying?.path === f.path}
-              playingRequestId={nowPlaying?.path === f.path ? nowPlaying.requestId : null}
-              selected={selected.has(f.path)}
-              dragging={dragging.has(f.path)}
-              dropEdge={
-                dragState.dropTarget?.path === f.path
-                  ? dragState.dropTarget.before
-                    ? "before"
-                    : "after"
-                  : null
-              }
-              columnCount={headers.length}
-              showMd5={showMd5}
-              showBadge={showBadge}
-              onReveal={() => onReveal(f.path)}
-              onTogglePlay={() => onTogglePlay(f.path)}
-              onDelete={() => onDelete(f.path, selected.has(f.path))}
-              onMouseDown={(ev) => onRowMouseDown(f.path, ev)}
-              onRowClick={(ev) => {
-                if (consumeClickSuppression()) return;
-                onSelectRow(f.path, ev);
-              }}
-            />
-          ))}
+          {visibleFiles.length === 0 && files.length > 0 ? (
+            <tr>
+              <td className="no-matches muted" colSpan={headers.length}>
+                No files match the filter.
+              </td>
+            </tr>
+          ) : (
+            visibleFiles.map((f) => (
+              <ResultRow
+                key={f.path}
+                file={f}
+                cover={covers.get(f.path)}
+                playing={nowPlaying?.path === f.path}
+                playingRequestId={nowPlaying?.path === f.path ? nowPlaying.requestId : null}
+                selected={selected.has(f.path)}
+                dragging={dragging.has(f.path)}
+                dropEdge={
+                  dragState.dropTarget?.path === f.path
+                    ? dragState.dropTarget.before
+                      ? "before"
+                      : "after"
+                    : null
+                }
+                columnCount={headers.length}
+                showMd5={showMd5}
+                showBadge={showBadge}
+                onReveal={() => onReveal(f.path)}
+                onTogglePlay={() => onTogglePlay(f.path)}
+                onDelete={() => onDelete(f.path, selected.has(f.path))}
+                onMouseDown={(ev) => onRowMouseDown(f.path, ev)}
+                onRowClick={(ev) => {
+                  if (consumeClickSuppression()) return;
+                  onSelectRow(f.path, ev);
+                }}
+              />
+            ))
+          )}
         </tbody>
       </table>
     </div>

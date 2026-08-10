@@ -5,7 +5,7 @@
 // Components render that markup now, and JSX escapes interpolated values
 // itself, so that whole class of mistake is gone along with the helper.
 
-import type { CoverArt, FileAnalysis } from "./types";
+import type { CoverArt, Detections, FileAnalysis, FlacMd5Status } from "./types";
 
 /// Audio extensions, stripped when suggesting a file name from a dropped file.
 const AUDIO_EXTS = [
@@ -153,4 +153,99 @@ export function playlistNameFrom(
   fallback = "Playlist",
 ): string {
   return `${nameFrom(path, fallback)}.${ext}`;
+}
+
+// --- Search filter (TopBar) --------------------------------------------------
+
+function detectionSearchWords(d: Detections): string {
+  const tags: string[] = [];
+  if (d.upscaling) tags.push("upscaled");
+  if (d.upsampling) tags.push("upsampled");
+  if (d.transcoding === "detected") tags.push("transcoded");
+  else if (d.transcoding === "suspected") tags.push("transcoded suspected");
+  if (tags.length === 0) tags.push("clean");
+  return tags.join(" ");
+}
+
+function md5SearchWords(m: FlacMd5Status | null): string {
+  if (!m) return "";
+  switch (m.state) {
+    case "Match":
+      return "md5 ok match";
+    case "Mismatch":
+      return "md5 mismatch";
+    case "NoSignature":
+      return "";
+    case "Present":
+      return "md5 present";
+    case "Error":
+      return `md5 error ${m.detail}`;
+  }
+}
+
+/// Flattens everything a results-table row actually shows — file name,
+/// format, bit depth, sample rate, detections, clipping, MD5 status, and so
+/// on — into one lowercase string for the search filter (TopBar) to match
+/// against, so "24-bit" or "transcoded" finds files without needing the
+/// filename itself to mention them. Mirrors ResultRow/ResultCells' own
+/// formatting rather than sharing code with them (those compute a colour and
+/// a tooltip alongside the text, which the filter has no use for) — a new
+/// column there should get a line here too.
+export function fileSearchText(f: FileAnalysis): string {
+  const parts = [
+    f.file_name,
+    f.format,
+    f.ext_mismatch ? "extension mismatch" : "",
+    f.declared_bits != null ? `${f.declared_bits}-bit` : "float",
+    f.real_bit_depth != null ? `${f.real_bit_depth}-bit real` : "",
+    `${(f.sample_rate / 1000).toFixed(1)}k`,
+    fmtDuration(f.duration_secs),
+    fmtSize(f.size_bytes),
+    fmtCutoff(f),
+    `${f.channels}ch`,
+    f.fake_stereo == null
+      ? f.channels <= 1
+        ? "mono"
+        : ""
+      : f.fake_stereo
+        ? "dual-mono fake stereo"
+        : f.channels > 2
+          ? "multi"
+          : "stereo",
+    f.clipping.clipped ? `${f.clipping.clip_events} clip events clipping` : "no clipping",
+    Number.isFinite(f.clipping.true_peak_dbtp)
+      ? `${f.clipping.true_peak_dbtp.toFixed(1)} dbtp true peak`
+      : "",
+    f.dr_db != null && Number.isFinite(f.dr_db) ? `${f.dr_db.toFixed(1)} db dynamics` : "",
+    detectionSearchWords(f.detections),
+    f.detections.detail,
+    f.badge ?? "",
+    md5SearchWords(f.flac_md5),
+    f.error ?? "",
+  ];
+  return parts.filter(Boolean).join(" | ").toLowerCase();
+}
+
+/// True when every "word" in `query` — a run of letters/digits, with
+/// anything else (spaces, hyphens, punctuation) treated as a separator — is
+/// found as a whole word in `haystack`, except the last one, which only
+/// needs to *start* a word if the query doesn't itself end on a separator
+/// (i.e. it's still being typed).
+///
+/// The whole-word rule (rather than a plain substring search) is what stops
+/// "16-" — typed while aiming for "16-bit" — from matching "160 MB" or
+/// "116 MB": both contain "16" as a substring, but the trailing "-" closes
+/// the word, and `\b16\b` doesn't match a "16" immediately followed by
+/// another digit ("160") or preceded by one ("116"). Typing "16" without the
+/// trailing separator still matches both, since at that point it could still
+/// become "160" — the word isn't closed yet.
+export function matchesSearch(haystack: string, query: string): boolean {
+  const words = query.toLowerCase().match(/[a-z0-9]+/g);
+  if (!words) return true;
+  const lastWordOpen = /[a-z0-9]$/.test(query);
+  const hay = haystack.toLowerCase();
+  return words.every((word, i) => {
+    const closed = i < words.length - 1 || !lastWordOpen;
+    return new RegExp(`\\b${word}${closed ? "\\b" : ""}`).test(hay);
+  });
 }

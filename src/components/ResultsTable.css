@@ -172,3 +172,12 @@ td.detections {
   white-space: normal;
   min-width: 130px;
 }
+
+/* Shown instead of the row list when the search filter (TopBar) matches
+   nothing — the underlying list isn't actually empty, so this reads
+   differently from the Dropzone's empty state. */
+.no-matches {
+  text-align: center;
+  padding: 22px 12px;
+  white-space: normal;
+}

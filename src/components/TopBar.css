@@ -7,12 +7,77 @@
 }
 /* No `.brand` block anymore — the window's own titlebar already shows
    "FlacCompagnon", so a second title + tagline here was a duplicate.
-   `margin-left: auto` keeps the actions where they were (flush right)
-   now that they're `.topbar`'s only child. */
+   `margin-left: auto` keeps the actions flush right regardless of whether
+   `.topbar-search` is its only sibling or not. */
 .actions {
   display: flex;
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
   margin-left: auto;
+}
+
+/* Display-only filter for the results table (see ResultsTable's
+   `visiblePaths`) — sits at the opposite end of the bar from `.actions`.
+   `position: relative` anchors the icon and the clear button inside the
+   field itself, rather than as separate elements alongside it. */
+.topbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+.topbar-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 9px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.topbar-search input {
+  /* Matches .tag-panel's width (TagPanel.css) so the field lines up with the
+     panel that appears below it once a row is selected. */
+  width: 272px;
+  background: var(--bg-elev2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  /* Left room for the search icon, right room for the clear button — kept
+     even while it's hidden, so text doesn't shift under it once it appears. */
+  padding: 7px 26px 7px 28px;
+  font-size: 13px;
+  color: var(--text);
+}
+.topbar-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+/* `:has()` reaches "backwards" to a preceding sibling — the icon sits before
+   the input in the markup so it visually reads as inside the field's left
+   edge — the same trick already used for the radio cards in
+   PlaylistFormatModal.css. */
+.topbar-search:has(input:focus) .topbar-search-icon {
+  color: var(--accent);
+}
+.topbar-search input::placeholder {
+  color: var(--muted);
+}
+.topbar-search input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Only shown while the field is hovered — see the .tsx comment for why.
+   `top`/`transform` center it vertically: absolute positioning takes it out
+   of the flex flow, so `.topbar-search`'s `align-items: center` no longer
+   applies to it. */
+.topbar-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.topbar-search:hover .topbar-search-clear {
+  opacity: 1;
 }

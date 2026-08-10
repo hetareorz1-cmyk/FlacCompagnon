@@ -8,7 +8,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 
 import type { PlaylistFormat } from "./types";
 import * as api from "./api";
-import { commonDir } from "./format";
+import { commonDir, fileSearchText, matchesSearch } from "./format";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { Dropzone } from "./components/Dropzone";
 import { DropGuard, Progress } from "./components/Progress";
@@ -40,6 +40,7 @@ export function App() {
   const tagPanelRef = useRef<TagPanelHandle>(null);
   const [ffmpegAvailable, setFfmpegAvailable] = useState(false);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const cache = useTagCache();
   const { clear: clearCache, invalidate } = cache;
@@ -60,6 +61,27 @@ export function App() {
     () => analysis.orderedFiles.map((f) => f.path),
     [analysis.orderedFiles],
   );
+
+  // Search box in the top bar: a pure display filter over the table. Nothing
+  // else — playback order, the selection, drag-reorder and every export —
+  // reads from `analysis.orderedFiles`/`orderedPaths` directly and never
+  // learns this filter exists, so hiding a row here can't skip it during
+  // playback or drop it from a CSV/JSON/M3U export.
+  //
+  // Matches against everything the row actually shows (`fileSearchText`), not
+  // just the file name — so "24-bit", "transcoded" or "flac" filters the list
+  // too. `matchesSearch` does whole-word matching, not a plain substring
+  // search, so a closed word like "16-" (typed for "16-bit") can't match
+  // "160 MB" or "116 MB" just because they contain "16".
+  const hasSearchQuery = searchQuery.trim().length > 0;
+  const visiblePaths = useMemo(() => {
+    if (!hasSearchQuery) return null;
+    const matches = new Set<string>();
+    for (const f of analysis.orderedFiles) {
+      if (matchesSearch(fileSearchText(f), searchQuery)) matches.add(f.path);
+    }
+    return matches;
+  }, [analysis.orderedFiles, hasSearchQuery, searchQuery]);
 
   const selection = useSelection(orderedPaths);
   const { pruneSelection, clearSelection } = selection;
@@ -139,6 +161,7 @@ export function App() {
       reset: () => {
         playback.stop();
         analysis.reset();
+        setSearchQuery("");
       },
       generateSpectrograms: () => void analysis.generateSpectrograms(),
     }),
@@ -234,6 +257,8 @@ export function App() {
         hasReport={hasResults}
         canGenerateSpectrograms={analysis.targets.length > 0}
         ffmpegAvailable={ffmpegAvailable}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         onPick={() => void pickFolder()}
         onSave={() => void exports.saveReport()}
         onExportPlaylist={() => setPlaylistModalOpen(true)}
@@ -266,6 +291,7 @@ export function App() {
                 <ResultsSummary
                   report={analysis.report}
                   rootPath={commonDir(analysis.report.files.map((f) => f.path))}
+                  visibleCount={visiblePaths == null ? null : visiblePaths.size}
                   onToast={showToast}
                 />
                 <ResultsTable
@@ -273,6 +299,7 @@ export function App() {
                   covers={cache.covers}
                   nowPlaying={playback.nowPlaying}
                   selectedPaths={selection.selectedPaths}
+                  visiblePaths={visiblePaths}
                   onSelectRow={guardedSelectRow}
                   onReorder={analysis.setDisplayOrder}
                   onReveal={(p) =>
