@@ -31,12 +31,21 @@ struct JsonReport {
 }
 
 /// Build the CSV text for a folder report.
+///
+/// Column order mirrors the results table left-to-right (`ResultsTable.tsx`'s
+/// `headers`), not the order fields were originally added to this struct —
+/// so a column's position here means the same thing it means on screen.
+/// Fields the table folds into a single cell (Detections: `status` +
+/// `upscaling`/`upsampling`/`transcoding`/`aac_grid`; Clipping: `clipped` +
+/// `clip_events`/`peak_dbfs`) are grouped together at that cell's position
+/// rather than split across the row. No column is dropped — every field the
+/// old order exported is still here, just reordered.
 pub fn build_csv(report: &FolderReport) -> String {
     let mut out = String::new();
     out.push_str(
-        "file,format,badge,size_bytes,sample_rate,channels,declared_bits,real_bit_depth,duration_s,\
-         status,upscaling,upsampling,transcoding,aac_grid,cutoff_hz,cutoff_ratio,fake_stereo,\
-         clipped,clip_events,peak_dbfs,true_peak_dbtp,dr_db,md5\n",
+        "file,format,badge,sample_rate,declared_bits,real_bit_depth,duration_s,size_bytes,\
+         status,upscaling,upsampling,transcoding,aac_grid,cutoff_hz,cutoff_ratio,channels,\
+         fake_stereo,clipped,clip_events,peak_dbfs,true_peak_dbtp,dr_db,md5\n",
     );
     for f in &report.files {
         let md5 = f
@@ -56,18 +65,17 @@ pub fn build_csv(report: &FolderReport) -> String {
             TranscodeState::Detected => "detected",
         };
         out.push_str(&format!(
-            "{},{},{},{},{},{},{},{},{:.3},{},{},{},{},{},{},{},{},{},{},{:.2},{:.2},{},{}\n",
+            "{},{},{},{},{},{},{:.3},{},{},{},{},{},{},{},{},{},{},{},{},{:.2},{:.2},{},{}\n",
             csv_escape(&f.file_name),
             f.format,
             f.badge.clone().unwrap_or_default(),
-            // Raw byte count, not a human-readable string: a spreadsheet can
-            // then sum/sort it, and the reader picks their own unit convention.
-            f.size_bytes,
             f.sample_rate,
-            f.channels,
             opt(f.declared_bits),
             opt(f.real_bit_depth),
             f.duration_secs,
+            // Raw byte count, not a human-readable string: a spreadsheet can
+            // then sum/sort it, and the reader picks their own unit convention.
+            f.size_bytes,
             f.detections.summary,
             f.detections.upscaling,
             f.detections.upsampling,
@@ -75,6 +83,7 @@ pub fn build_csv(report: &FolderReport) -> String {
             f.requant_rate.map(|v| format!("{v:.3}")).unwrap_or_default(),
             f.cutoff_hz.map(|v| format!("{v:.0}")).unwrap_or_default(),
             f.cutoff_ratio.map(|v| format!("{v:.3}")).unwrap_or_default(),
+            f.channels,
             opt_bool(f.fake_stereo),
             f.clipping.clipped,
             f.clipping.clip_events,
