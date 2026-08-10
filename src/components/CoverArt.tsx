@@ -9,7 +9,7 @@
 // mixed selection would overwrite every file's artwork, not just its role.
 
 import { useEffect, useState } from "react";
-import { ImageDown, Music, Trash2, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageDown, Music, Trash2, Upload } from "lucide-react";
 
 import type { CoverArt as CoverArtData } from "../types";
 import { PICTURE_TYPE_LABELS, coverDataUrl, pictureTypeLabel } from "../format";
@@ -77,6 +77,11 @@ export function CoverArt({
   const url = cover ? coverDataUrl(cover) : null;
   const frameClass = dragOver ? "tag-cover-frame drag-over" : "tag-cover-frame";
 
+  // Plain <button>s rather than IconButton: `.icon-btn`'s family is a flat,
+  // muted-at-rest control meant for a toolbar or a table row, but these float
+  // as a circular, semi-transparent overlay directly on top of the artwork —
+  // a different visual language IconButton isn't meant to cover, not a
+  // variant it's missing.
   const nav = multiple && (
     <>
       <button
@@ -85,7 +90,7 @@ export function CoverArt({
         title="Previous cover"
         onClick={() => step(-1)}
       >
-        ‹
+        <ChevronLeft size={16} strokeWidth={2.2} />
       </button>
       <button
         className="tag-cover-nav tag-cover-next"
@@ -93,7 +98,7 @@ export function CoverArt({
         title="Next cover"
         onClick={() => step(1)}
       >
-        ›
+        <ChevronRight size={16} strokeWidth={2.2} />
       </button>
     </>
   );

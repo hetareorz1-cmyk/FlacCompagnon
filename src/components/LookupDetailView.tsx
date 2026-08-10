@@ -3,6 +3,8 @@
 // several files there's no way to know which track goes with which file, so
 // only the album-level fields can be applied.
 
+import { ChevronLeft } from "lucide-react";
+
 import type { LookupRelease } from "../types";
 import { coverDataUrl } from "../format";
 import "./LookupDetailView.css";
@@ -35,7 +37,8 @@ export function LookupDetailView({
   return (
     <div className="lookup-view">
       <button className="btn btn-ghost lookup-back-btn" type="button" onClick={onBack}>
-        ‹ Back to results
+        <ChevronLeft size={14} strokeWidth={2} />
+        Back to results
       </button>
 
       <div className="lookup-detail-body">

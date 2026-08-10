@@ -1,6 +1,9 @@
 .lookup-back-btn {
   align-self: flex-start;
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .lookup-detail-body {
   display: flex;
