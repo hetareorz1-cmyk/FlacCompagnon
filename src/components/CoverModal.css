@@ -19,3 +19,45 @@
   border-radius: 20px; /* pill: fully rounded ends, like .chip */
   padding: 5px 14px;
 }
+/* `inline-flex` (not `flex`) so this box shrinks to the image's own
+   rendered size rather than stretching to fill `.cover-modal-inner`'s cross
+   axis — the chevrons are positioned absolutely *against this box*, so its
+   size has to track the image exactly, and so does `.cover-modal-inner`'s in
+   turn (see the .tsx file's header comment on why that matters for the
+   close button). */
+.cover-modal-body {
+  position: relative;
+  display: inline-flex;
+}
+/* Same circular floating treatment as .cover-modal-close (radius 50%, own
+   surface, drop shadow) rather than .icon-btn: like that button, this one
+   floats directly on the backdrop, not in a toolbar or a table row.
+   Centered on the image's own height (`top: 50%`), and offset far enough
+   past each edge (36px button + 18px gap) to sit clear of the artwork
+   rather than overlapping it, the way the tag panel's carousel chevrons do. */
+.cover-modal-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+.cover-modal-prev {
+  left: -54px;
+}
+.cover-modal-next {
+  right: -54px;
+}
+.cover-modal-nav:hover {
+  background: var(--bg-elev2);
+  color: var(--accent);
+}

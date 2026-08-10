@@ -84,3 +84,18 @@
 .topbar-search:hover .topbar-search-clear {
   opacity: 1;
 }
+
+/* Deliberately bigger than the standard 20×20 .icon-btn box (see
+   IconButton.css's comment on why that box is normally fixed everywhere):
+   this button stands alone next to .topbar-search rather than repeating down
+   a list, and it needs the extra room for ListOrdered's small "1 2 3"
+   glyphs to actually read as numbers. Height/width matches .topbar-search
+   input's own rendered box (13px text + 7px vertical padding + 1px border
+   each side), so the two look like a matched pair rather than one being an
+   odd size out. --radius-md, not -sm, for the same reason .btn/inputs use it:
+   this is a clickable control, not a small in-row icon. */
+.topbar-renumber {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+}

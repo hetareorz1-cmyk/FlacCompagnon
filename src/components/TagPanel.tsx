@@ -71,7 +71,13 @@ export function TagPanel({
   ref,
 }: TagPanelProps) {
   const coverBoxRef = useRef<HTMLDivElement>(null);
-  const [lightboxCover, setLightboxCover] = useState<CoverArtData | null>(null);
+  // Snapshotted from CoverArt's `covers`/`index` at the moment the image is
+  // clicked — not read live from `shownCovers` below, so an edit made while
+  // the lightbox is open (unlikely, but the cover box stays interactive
+  // behind it) can't shift what the lightbox is showing out from under it.
+  const [lightbox, setLightbox] = useState<{ covers: CoverArtData[]; index: number } | null>(
+    null,
+  );
   const [extendedOpen, setExtendedOpen] = useState(false);
   const [lookupOpen, setLookupOpen] = useState(false);
   const [coverLoading, setCoverLoading] = useState(false);
@@ -170,17 +176,17 @@ export function TagPanel({
     <aside className="tag-panel">
       <div className="tag-panel-head">
         <h2>Tags</h2>
-        <div className="tag-panel-head-right">
-          <span className="muted">
-            {selectedPaths.length === 1 ? "1 track" : `${selectedPaths.length} tracks`}
-          </span>
-          <IconButton
-            icon={<X size={14} strokeWidth={1.8} />}
-            title="Close (deselect)"
-            variant="close"
-            onClick={onClose}
-          />
-        </div>
+        {/* The selected-track count used to live here as text ("N tracks"),
+            but ResultsSummary now shows "N selected" above the table, so
+            repeating it here was a duplicate — dropped, leaving just the
+            close button. */}
+        <IconButton
+          icon={<X size={14} strokeWidth={1.8} />}
+          title="Close (deselect)"
+          variant="close"
+          className="tag-panel-close"
+          onClick={onClose}
+        />
       </div>
 
       <div ref={coverBoxRef}>
@@ -188,7 +194,7 @@ export function TagPanel({
           covers={shownCovers}
           dragOver={coverDragOver}
           loading={coverLoading}
-          onOpenLightbox={setLightboxCover}
+          onOpenLightbox={(covers, index) => setLightbox({ covers, index })}
           onRoleChange={editor.setCoverRole}
           onDelete={() => setDeleteCoverOpen(true)}
           onExtract={extractCover}
@@ -238,7 +244,12 @@ export function TagPanel({
         }}
         onCancel={() => setDeleteCoverOpen(false)}
       />
-      <CoverModal cover={lightboxCover} onClose={() => setLightboxCover(null)} />
+      <CoverModal
+        covers={lightbox?.covers ?? []}
+        index={lightbox?.index ?? 0}
+        onNavigate={(index) => setLightbox((l) => (l ? { ...l, index } : l))}
+        onClose={() => setLightbox(null)}
+      />
       <ExtendedTagsModal
         open={extendedOpen}
         rows={extended}

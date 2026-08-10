@@ -35,6 +35,8 @@ FlacCompagnon runs the same three **independent** detections as the original Los
 
 See [Detection algorithms](#detection-algorithms) below for how each works, and its limitations. Like the original, these are informed heuristics, not cryptographic proof — the spectrogram is the final arbiter.
 
+A **search field** above the table filters which rows are shown — type a format, a bit depth, a detection name, anything a column displays. It only ever affects the display: playback order, the current selection, drag-reordering, and every export (CSV, JSON, M3U) all keep working off the full list, filtered or not.
+
 ### 2. FLAC MD5 verification
 
 Every FLAC file stores an MD5 hash of its decoded audio in the STREAMINFO block. FlacCompagnon reads it natively (no external `flac` binary required) and, by fully decoding the file, recomputes the hash to confirm the audio is intact — the same integrity check as `flac -t`.
@@ -72,6 +74,7 @@ Selecting rows opens a **tag panel** on the left — the one place in the app th
 
 - **The usual fields**, Mp3tag-style: title, artist, album, album artist, composer, year, genre, track and disc numbers (with totals), comment, and a compilation flag.
 - **Batch editing**: select several tracks and every field shows either the shared value or a **“multiple values”** badge. Only the fields you actually touch are written — the others are left exactly as they are on each file, so editing the album of 12 tracks never flattens their differing titles.
+- **Renumbering**: select two or more tracks and click the renumber icon next to the search field to set Track to 1–N and Track Total to N across the selection, in the order shown in the table (not the order you clicked them in) — a confirmation dialog spells out exactly what will change before anything is written.
 - **Cover art**, shown edge-to-edge at its own aspect ratio with a banner below carrying its dimensions/format/size and a **role picker** (_Front cover_, _Back cover_, _Artist_, …) — pick a different role to relabel the artwork without touching the image itself. When the selection holds several different covers, chevrons (and a 3 s auto-advance) cycle through them and the role picker is disabled (relabeling only makes sense when every selected file shares the exact same image). **Drop an image file onto the artwork** to replace the cover — as _Front cover_ — on every selected track.
 - **Extended tags**: a read-only viewer for everything else present in the file (ISRC, BPM, ReplayGain, custom frames, …), merged across the selection with the same “multiple values” handling.
 - **Search online** looks the release up on **MusicBrainz** and, optionally, **Discogs**, and pre-fills the panel from the result — see below.

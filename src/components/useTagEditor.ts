@@ -16,6 +16,30 @@ import type { TagFieldValue } from "./TagField";
 import { TAG_TEXT_FIELDS, type TagTextField } from "./tagLayout";
 import { compilationValue, fieldValues } from "./tagSelection";
 
+/// A `TagEdits` where every field is "Unset" (untouched) — the starting point
+/// for any write that only means to touch a couple of fields, rather than
+/// hand-repeating all twelve field names at each call site. Used by this
+/// hook's own `buildEdits` and by the renumber flow (`useRenumberTracks`),
+/// which only ever sets `track`/`track_total`.
+export function emptyTagEdits(): TagEdits {
+  return {
+    title: "Unset",
+    artist: "Unset",
+    album: "Unset",
+    album_artist: "Unset",
+    composer: "Unset",
+    year: "Unset",
+    track: "Unset",
+    track_total: "Unset",
+    disc: "Unset",
+    disc_total: "Unset",
+    genre: "Unset",
+    comment: "Unset",
+    compilation: null,
+    cover: "Unset",
+  };
+}
+
 export interface UseTagEditorArgs {
   paths: string[];
   tagSets: TagSet[];
@@ -107,22 +131,11 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
   }, []);
 
   const buildEdits = useCallback((): TagEdits => {
-    const out = {
-      title: "Unset",
-      artist: "Unset",
-      album: "Unset",
-      album_artist: "Unset",
-      composer: "Unset",
-      year: "Unset",
-      track: "Unset",
-      track_total: "Unset",
-      disc: "Unset",
-      disc_total: "Unset",
-      genre: "Unset",
-      comment: "Unset",
+    const out: TagEdits = {
+      ...emptyTagEdits(),
       compilation: compilationEdit,
       cover: coverEdit,
-    } as TagEdits;
+    };
     for (const field of TAG_TEXT_FIELDS) {
       const edited = edits[field];
       if (edited === undefined) continue;

@@ -43,6 +43,37 @@
   color: var(--muted);
   font-style: italic;
 }
+/* Wraps a TagField's own input/textarea (not TagFractionField's — those stay
+   too narrow for a clear button) so .tag-field-clear can anchor inside the
+   box. Right padding on the input is kept even while the button is hidden,
+   same reasoning as .topbar-search input, so typing the first character
+   doesn't shift text under a button that's about to appear. */
+.tag-field-input-wrap {
+  position: relative;
+}
+.tag-field-input-wrap input[type="text"],
+.tag-field-input-wrap textarea {
+  padding-right: 24px;
+}
+.tag-field-clear {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.tag-field-input-wrap:hover .tag-field-clear {
+  opacity: 1;
+}
+/* The comment field's textarea grows taller than a single line, so
+   vertical-centering the button (like every other field) would float it
+   in the middle of empty space below the first line — pin it to the top
+   instead, same corner a scrollbar would occupy. */
+.tag-field-clear-top {
+  top: 6px;
+  transform: none;
+}
 .tag-field-pair {
   display: flex;
   align-items: center;

@@ -2,7 +2,7 @@
 // what's enabled is decided by the app state passed in.
 
 import { useRef } from "react";
-import { Search, X } from "lucide-react";
+import { ListOrdered, Search, X } from "lucide-react";
 
 import { IconButton } from "./IconButton";
 import { useTheme } from "./useTheme";
@@ -22,6 +22,13 @@ export interface TopBarProps {
   /// working off the full list.
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  /// Size of the current selection — the renumber button only makes sense
+  /// (and only enables) once there are at least two tracks to order.
+  selectedCount: number;
+  renumberBusy: boolean;
+  /// Opens the confirmation dialog; the actual write happens after the user
+  /// confirms (see App.tsx) since it overwrites Track/Track Total tags.
+  onRenumberTracks: () => void;
   onPick: () => void;
   onSave: () => void;
   onExportPlaylist: () => void;
@@ -36,6 +43,9 @@ export function TopBar({
   ffmpegAvailable,
   searchQuery,
   onSearchChange,
+  selectedCount,
+  renumberBusy,
+  onRenumberTracks,
   onPick,
   onSave,
   onExportPlaylist,
@@ -76,6 +86,22 @@ export function TopBar({
           />
         )}
       </div>
+      {/* Sized to match .topbar-search's height rather than the standard
+          20×20 .icon-btn box (see .topbar-renumber in TopBar.css) — at that
+          size ListOrdered's "1 2 3" glyphs read as noise, not numbers. It
+          sits right next to the search field it pairs with, so the bigger
+          box reads as intentional rather than inconsistent. */}
+      <IconButton
+        icon={<ListOrdered size={20} strokeWidth={1.6} />}
+        title={
+          selectedCount < 2
+            ? "Select at least two tracks to renumber"
+            : `Renumber ${selectedCount} selected tracks 1–${selectedCount}`
+        }
+        className="topbar-renumber"
+        disabled={busy || renumberBusy || selectedCount < 2}
+        onClick={onRenumberTracks}
+      />
       <div className="actions">
         <button className="btn" disabled={busy} onClick={onPick}>
           Choose folder…

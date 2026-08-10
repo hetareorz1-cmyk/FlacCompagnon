@@ -31,6 +31,7 @@ import {
   useSelection,
   type SelectionModifiers,
 } from "./components/useSelection";
+import { useRenumberTracks } from "./components/useRenumberTracks";
 import { useTagCache, useTagPrefetch } from "./components/useTagCache";
 import { useToast } from "./components/useToast";
 import "./App.css";
@@ -41,6 +42,7 @@ export function App() {
   const [ffmpegAvailable, setFfmpegAvailable] = useState(false);
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [renumberConfirmOpen, setRenumberConfirmOpen] = useState(false);
 
   const cache = useTagCache();
   const { clear: clearCache, invalidate } = cache;
@@ -250,6 +252,25 @@ export function App() {
     [tagSetsFor, selection.selectedPaths],
   );
 
+  // `selection.selectedPaths` is in click order (see useSelection's doc
+  // comment), not display order — renumbering has to follow the table's
+  // order instead, or the assigned track numbers wouldn't match what the
+  // user sees top to bottom.
+  const selectedPathSet = useMemo(
+    () => new Set(selection.selectedPaths),
+    [selection.selectedPaths],
+  );
+  const orderedSelectedPaths = useMemo(
+    () => analysis.orderedFiles.filter((f) => selectedPathSet.has(f.path)).map((f) => f.path),
+    [analysis.orderedFiles, selectedPathSet],
+  );
+
+  const renumberTracks = useRenumberTracks({ onSaved: invalidate, onToast: showToast });
+  const confirmRenumber = useCallback(() => {
+    setRenumberConfirmOpen(false);
+    void renumberTracks.renumber(orderedSelectedPaths);
+  }, [renumberTracks, orderedSelectedPaths]);
+
   return (
     <div id="app">
       <TopBar
@@ -259,6 +280,9 @@ export function App() {
         ffmpegAvailable={ffmpegAvailable}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        selectedCount={selection.selectedPaths.length}
+        renumberBusy={renumberTracks.busy}
+        onRenumberTracks={() => setRenumberConfirmOpen(true)}
         onPick={() => void pickFolder()}
         onSave={() => void exports.saveReport()}
         onExportPlaylist={() => setPlaylistModalOpen(true)}
@@ -291,6 +315,7 @@ export function App() {
                 <ResultsSummary
                   report={analysis.report}
                   rootPath={commonDir(analysis.report.files.map((f) => f.path))}
+                  selectedCount={selection.selectedPaths.length}
                   visibleCount={visiblePaths == null ? null : visiblePaths.size}
                   onToast={showToast}
                 />
@@ -340,6 +365,15 @@ export function App() {
         danger
         onConfirm={confirmPendingSelection}
         onCancel={() => setPendingSelection(null)}
+      />
+
+      <ConfirmDialog
+        open={renumberConfirmOpen}
+        title="Renumber tracks?"
+        message={`Sets Track to 1–${orderedSelectedPaths.length} and Track Total to ${orderedSelectedPaths.length} for the ${orderedSelectedPaths.length} selected tracks, in the order shown in the table — overwriting any existing values.`}
+        confirmLabel="Renumber"
+        onConfirm={confirmRenumber}
+        onCancel={() => setRenumberConfirmOpen(false)}
       />
 
       {toast && <div className={`toast ${toast.kind}`}>{toast.msg}</div>}

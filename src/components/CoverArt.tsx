@@ -29,7 +29,11 @@ export interface CoverArtProps {
   /// A dropped image is being read from disk — shows a spinner in place of
   /// the drag-upload icon so the box isn't silently unresponsive in between.
   loading: boolean;
-  onOpenLightbox: (cover: CoverArtData) => void;
+  /// Opens the lightbox on the currently shown cover, but hands over the
+  /// whole set and its index — the lightbox has its own chevrons (see
+  /// CoverModal) rather than sharing this box's carousel state, since closing
+  /// it shouldn't leave this box's mini-carousel wherever the lightbox ended.
+  onOpenLightbox: (covers: CoverArtData[], index: number) => void;
   onRoleChange: (cover: CoverArtData, pictureType: string) => void;
   /// Removes the cover from every selected file.
   onDelete: () => void;
@@ -120,7 +124,7 @@ export function CoverArt({
             className="tag-cover-img"
             src={url}
             alt=""
-            onClick={() => onOpenLightbox(cover)}
+            onClick={() => onOpenLightbox(covers, index)}
           />
         ) : (
           <span className="tag-cover-placeholder">
