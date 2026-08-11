@@ -110,7 +110,13 @@ Paths are written **absolute**, so the playlist plays from anywhere on the machi
 
 Click the play icon on any row to preview it — no tag panel or selection required. A footer bar carries the transport: **Previous / Play-Pause / Next**, a seek bar (click or drag anywhere on the track), and a volume control (the slider stays hidden until you hover it, so it never crowds the seek bar; click the speaker icon to mute, click again to restore full volume).
 
-Previous/Next, and the natural advance once a track finishes on its own, **follow the current selection**: with two or more rows selected, playback stays within that selection — skipping any unselected row in between — and stops once the selection is exhausted rather than spilling into the rest of the table. With no selection, or exactly one row selected (a deliberate one-off preview), it walks the full table as shown, filtered and sorted.
+Pressing the footer's Play button decides what to play next from the selection **at that moment**:
+
+- **No selection** — starts at the top of the table and plays straight through to the end.
+- **One row selected** — starts at that row and plays on to the end, same as no selection but for the starting point.
+- **Several rows selected** — plays just that selection, in table order (skipping any unselected row in between), and stops once the last one finishes.
+
+Previous/Next and the natural advance once a track finishes both follow whichever of those applies. That choice is made once, when Play starts — **changing the selection while something is already playing has no effect on the playback in progress**, only on the next time Play is pressed. Clicking the play icon on an individual row previews it directly (no tag panel or selection required) and follows the same rule for what it plays next.
 
 ---
 

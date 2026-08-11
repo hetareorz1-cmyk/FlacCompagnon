@@ -9,6 +9,15 @@
 // `requestId` pairs each play with the backend's `playback://finished` event,
 // so a stale notification from a track that was already superseded can't
 // trigger auto-advance on the wrong row.
+//
+// Playback rules (see `activeQueue`): pressing Play with no selection starts
+// at the top of the table and plays on to the end; with one row selected, it
+// starts there and still plays on to the end; with several rows selected, it
+// plays just that selection, in table order, and stops once it's exhausted.
+// Whichever of those applies is decided once, when playback starts, and is
+// deliberately not re-decided as the selection changes afterward — the user
+// asked for a selection made *during* playback to have no effect on a
+// session already under way, only on the next one.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -24,11 +33,6 @@ export interface NowPlaying {
 
 export function usePlayback(
   orderedPaths: string[],
-  /// The selection follows the same rule the footer's Previous/Next buttons
-  /// use (`effectiveQueue`) — with a selection active, a track ending on its
-  /// own advances within that selection, skipping any unselected row in
-  /// between, and stops once the selection is exhausted rather than spilling
-  /// over into the rest of the table.
   selectedPaths: string[],
   onToast: (msg: string, kind?: "info" | "error") => void,
 ) {
@@ -46,14 +50,30 @@ export function usePlayback(
   const [position, setPosition] = useState(0);
   const [volume, setVolumeState] = useState(1);
   const [muted, setMuted] = useState(false);
-  // Mirrors `nowPlaying` for the "finished"/"position" listeners, which must
-  // not read it through a state updater: React may invoke an updater more
-  // than once, and auto-advance has to fire exactly once per finished track.
+  // The list of tracks the current playback session walks through —
+  // `effectiveQueue` computed once, the moment playback starts (see `play`),
+  // from the order/selection at that instant. `null` while nothing is
+  // playing. Deliberately *not* recomputed as the selection changes while a
+  // track is already playing — see the module doc comment above — so
+  // auto-advance and Previous/Next both read this instead of calling
+  // `effectiveQueue` fresh each time.
+  const [activeQueue, setActiveQueueState] = useState<string[] | null>(null);
+
+  // Mirrors `nowPlaying`/`activeQueue` for the "finished"/"position"
+  // listeners, which must not read them through a state updater: React may
+  // invoke an updater more than once, and auto-advance has to fire exactly
+  // once per finished track.
   const current = useRef<NowPlaying | null>(null);
+  const activeQueueRef = useRef<string[] | null>(null);
   const orderRef = useRef(orderedPaths);
   orderRef.current = orderedPaths;
   const selectedRef = useRef(selectedPaths);
   selectedRef.current = selectedPaths;
+
+  const setActiveQueue = useCallback((q: string[] | null) => {
+    activeQueueRef.current = q;
+    setActiveQueueState(q);
+  }, []);
 
   useEffect(() => {
     current.current = nowPlaying;
@@ -67,10 +87,16 @@ export function usePlayback(
     setNowPlaying(null);
     setPaused(false);
     setPosition(0);
+    setActiveQueue(null);
     api.stopPlayback().catch(() => {});
-  }, []);
+  }, [setActiveQueue]);
 
-  const play = useCallback(
+  // Starts `path` without touching `activeQueue` — the continuation half of
+  // playback, used only by auto-advance and Previous/Next (via `stepQueue`),
+  // both of which must keep walking the queue already frozen for this
+  // session rather than deriving a new one. Every *external* "play this"
+  // action goes through `play`, below, instead.
+  const startTrack = useCallback(
     async (path: string) => {
       try {
         const requestId = await api.playTrack(path);
@@ -79,10 +105,25 @@ export function usePlayback(
         setPosition(0);
       } catch (e) {
         setNowPlaying(null);
+        setActiveQueue(null);
         onToast(String(e), "error");
       }
     },
-    [onToast],
+    [onToast, setActiveQueue],
+  );
+
+  // Every deliberate "play this track" action — the footer's Play button
+  // with nothing loaded, a row's own inline Play icon — freezes a new
+  // `activeQueue` from the current order/selection before starting `path`.
+  // That's what makes this a session boundary: anything that happens to the
+  // selection after this point, until the session ends, is ignored by
+  // auto-advance/Previous/Next (see the module doc comment).
+  const play = useCallback(
+    async (path: string) => {
+      setActiveQueue(effectiveQueue(orderRef.current, selectedRef.current));
+      await startTrack(path);
+    },
+    [setActiveQueue, startTrack],
   );
 
   const togglePlay = useCallback(
@@ -163,33 +204,52 @@ export function usePlayback(
     });
   }, [volume, muted]);
 
-  // Auto-advance to the next row in the effective queue when a track ends on
-  // its own; stop once that queue is exhausted (or was `null` to begin with —
-  // a single-row selection is a one-off preview, not something to advance out
-  // of). Subscribed once — the handler reads the current track, order and
-  // selection from refs, so re-ordering the table or changing the selection
-  // mid-playback doesn't tear down and rebuild the listener.
+  // Steps to the previous/next track within `activeQueue` — the footer's
+  // Previous/Next buttons. Reads the queue frozen at session start (via the
+  // ref, for the same "no stale closure" reason the listeners below do), not
+  // a fresh `effectiveQueue` call, so a selection change mid-playback can't
+  // redirect where these buttons go either.
+  const stepQueue = useCallback(
+    (delta: 1 | -1) => {
+      const queue = activeQueueRef.current;
+      const playing = current.current;
+      if (!queue || !playing) return;
+      const idx = queue.indexOf(playing.path);
+      if (idx === -1) return;
+      const target = queue[idx + delta];
+      if (target) void startTrack(target);
+    },
+    [startTrack],
+  );
+
+  // Auto-advance to the next row in `activeQueue` when a track ends on its
+  // own; stop once that queue is exhausted. Subscribed once — the handler
+  // reads the current track and queue from refs, so re-ordering the table or
+  // changing the selection mid-playback doesn't tear down and rebuild the
+  // listener (and, per the module doc comment, must not change what it does
+  // either).
   useEffect(() => {
     const unlisten = listen<PlaybackFinished>("playback://finished", (e) => {
       const playing = current.current;
       // A stale notification from a track already superseded by a newer play.
       if (!playing || e.payload.request_id !== playing.requestId) return;
-      const queue = effectiveQueue(orderRef.current, selectedRef.current);
-      const idx = queue?.indexOf(playing.path) ?? -1;
+      const queue = activeQueueRef.current;
+      const idx = queue ? queue.indexOf(playing.path) : -1;
       const next = idx === -1 ? undefined : queue?.[idx + 1];
       if (next) {
-        void play(next);
+        void startTrack(next);
       } else {
         current.current = null;
         setNowPlaying(null);
         setPaused(false);
         setPosition(0);
+        setActiveQueue(null);
       }
     });
     return () => {
       void unlisten.then((f) => f());
     };
-  }, [play]);
+  }, [startTrack, setActiveQueue]);
 
   // Drives the footer's seek bar while a track plays — throttled on the
   // backend (same cadence as the equalizer bars' level events), and simply
@@ -212,6 +272,7 @@ export function usePlayback(
     position,
     volume,
     muted,
+    activeQueue,
     play,
     togglePlay,
     stopIfPlaying,
@@ -220,5 +281,6 @@ export function usePlayback(
     seek,
     setVolume,
     toggleMute,
+    stepQueue,
   };
 }

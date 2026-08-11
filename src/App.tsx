@@ -204,25 +204,30 @@ export function App() {
   }, [pendingAction]);
 
   // `displayedPaths`, not `orderedPaths`: both the natural end-of-track
-  // auto-advance (inside usePlayback) and the footer's transport buttons
-  // (usePlaybackQueue, below) should walk the table exactly as it's
-  // currently shown — filtered and sorted — not the raw import order. See
-  // `displayedPaths`'s own doc comment above. The selection is passed through
-  // too, so auto-advance follows it the same way the buttons do (see
-  // `effectiveQueue` in playbackQueue.ts) — with a selection active, a track
-  // ending on its own skips any unselected row and stops once the selection
-  // runs out, rather than spilling into the rest of the table.
+  // auto-advance and the footer's transport buttons should walk the table
+  // exactly as it's currently shown — filtered and sorted — not the raw
+  // import order. See `displayedPaths`'s own doc comment above.
+  //
+  // Playback rules (see `usePlayback`'s own doc comment for the full
+  // rationale): no selection plays the whole table from the top; one row
+  // selected starts there and still plays on to the end; several rows
+  // selected play just that selection, in table order, and stop once it's
+  // exhausted. Whichever applies is decided once, when Play starts a session
+  // (`usePlayback`'s `activeQueue`) — changing the selection while a track is
+  // already playing has no effect on that session, only on the next one.
   const playback = usePlayback(displayedPaths, selection.selectedPaths, showToast);
   useTagPrefetch(orderedPaths, cache.fetchMissing);
 
-  // What the footer's transport buttons operate over — see the hook's own
-  // doc comment for the selection-count rules (0/1/many selected).
+  // What the footer's transport buttons show/trigger — see the hook's own
+  // doc comment for why it reads `activeQueue` rather than recomputing.
   const playbackQueue = usePlaybackQueue({
     orderedPaths: displayedPaths,
     selectedPaths: selection.selectedPaths,
     nowPlaying: playback.nowPlaying,
+    activeQueue: playback.activeQueue,
     play: playback.play,
     togglePause: playback.togglePause,
+    stepQueue: playback.stepQueue,
   });
 
   const exports = useExports({
