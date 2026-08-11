@@ -1,10 +1,24 @@
+/* `min-width` matches this row's own true floor (volume block 20+16+48+8=92,
+   the two time labels 30 each, the seek track's own 56px floor, plus the
+   three 8px gaps between them = 232px) rather than the usual `0` — without
+   it, the footer's outer flex row (this + .footer-stats + .playback-
+   transport, all `flex: 1`) was free to squeeze this box narrower than its
+   children actually need. Because this row is right-aligned
+   (`justify-content: flex-end`), that squeeze didn't clip evenly: the
+   leftmost child (the volume icon/slider) got pushed out past this box's own
+   left edge and rendered on top of `.playback-transport`'s Next button at
+   the window's minimum width with the tag panel open — a real overlap, not
+   just a layout that ran out of room. A non-zero floor here means the outer
+   row runs out of space for `.footer-stats` (which still has its own
+   `min-width: 0` and an ellipsis) before this one is ever asked to shrink
+   past what it can actually render. */
 .playback-seekbar {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  min-width: 0;
+  min-width: 232px;
 }
 
 .playback-volume {
@@ -25,7 +39,11 @@
    ever moves. It reveals on hovering the slider itself, not the icon or the
    row as a whole, so muting via the icon can't also flash the slider open. */
 .playback-volume-slider {
-  width: 72px;
+  /* Narrowed from 72px — this and `.volume-track` below being this wide was
+     most of what pushed `.playback-seekbar`'s own floor (see its comment)
+     high enough to be the actual trigger for the overlap bug; a slider this
+     short is still perfectly usable for a coarse volume drag. */
+  width: 48px;
   /* Same reasoning as `.playback-volume`'s own `margin-right`: at minimum
      volume the icon is Mute (see `volumeIcon`), a wider glyph than the
      others, and without this gap its own edge reads as overlapping the
@@ -44,7 +62,7 @@
    doesn't apply here, this one is a fixed short length instead. */
 .volume-track {
   flex: none;
-  width: 70px;
+  width: 46px;
   max-width: none;
   min-width: 0;
 }
@@ -76,7 +94,10 @@
   position: relative;
   flex: 1;
   max-width: 260px;
-  min-width: 80px;
+  /* Narrowed from 80px — see `.playback-seekbar`'s comment: this floor is
+     one of the terms that sets the row's own `min-width`, so shrinking it
+     directly buys back room at the window's minimum width. */
+  min-width: 56px;
   height: 14px;
   display: flex;
   align-items: center;
