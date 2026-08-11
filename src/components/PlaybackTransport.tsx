@@ -46,12 +46,7 @@ export function PlaybackTransport({
           playing ? (
             <Pause size={13} strokeWidth={1} fill="currentColor" />
           ) : (
-            // The Play triangle isn't left-right symmetric like Pause's two
-            // bars — flush-centering its bounding box reads as visibly
-            // off-center, so it gets nudged right by a hair. A className
-            // (not a wrapper element) so it composes with IconButton's own
-            // flex centering instead of fighting it.
-            <Play size={13} strokeWidth={1} fill="currentColor" className="playback-play-icon" />
+            <Play size={13} strokeWidth={1} fill="currentColor" />
           )
         }
         title={playing ? "Pause" : "Play"}

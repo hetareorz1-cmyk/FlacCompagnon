@@ -16,11 +16,28 @@
    this reliably beats `.icon-btn`'s own hover/disabled rules regardless of
    CSS import order. */
 .icon-btn.playback-transport-playpause {
+  position: relative;
   width: 28px;
   height: 28px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--accent) 16%, transparent);
   color: var(--accent);
+}
+/* The flex `align-items`/`justify-content` centering this button relies on
+   everywhere else (`.icon-btn`) splits the 28px box minus the 13px icon into
+   two 7.5px margins — not representable as a whole device pixel at 1x
+   scaling, so one side rounds up and the other down and the icon reads as
+   shifted toward one corner. `position: absolute` + `translate(-50%, -50%)`
+   centers using the icon's own precise (possibly fractional) box size
+   instead of a margin that has to round, which is exact regardless of pixel
+   ratio. Scoped to this button only: it's the one control big enough, and
+   with a small enough icon inside it, for half a pixel to actually be
+   visible. */
+.icon-btn.playback-transport-playpause svg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 .icon-btn.playback-transport-playpause:hover {
   background: color-mix(in srgb, var(--accent) 26%, transparent);
@@ -30,12 +47,4 @@
   background: var(--bg-elev2);
   color: var(--muted);
   opacity: 1;
-}
-
-/* See the .tsx comment: the Play triangle's own visual weight sits left of
-   its bounding box's true center, so it needs a small nudge to look centered
-   inside the round button — Pause's two bars are already symmetric and stay
-   untouched. */
-.playback-play-icon {
-  margin-left: 1.5px;
 }
