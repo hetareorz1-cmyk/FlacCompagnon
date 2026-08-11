@@ -68,11 +68,6 @@ thead th:has(.th-sort) {
   color: var(--text);
 }
 
-/* While a column sort overrides the natural order, dragging a row has no
-   coherent destination — see the `sort` doc comment in ResultsTable.tsx. */
-table.sorted tbody tr {
-  cursor: default;
-}
 tbody td {
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
@@ -90,9 +85,6 @@ tbody tr:hover {
 table {
   -webkit-user-select: none;
   user-select: none;
-}
-tbody tr {
-  cursor: grab;
 }
 tbody tr.selected {
   background: color-mix(in srgb, var(--accent) 16%, var(--bg-elev));
@@ -223,18 +215,81 @@ tbody tr.drop-after td {
   background: var(--bg-elev);
 }
 
-/* Reveal-in-file-browser button column. */
+/* Drag-handle column — see ResultRow.tsx's `dragHandleCell` comment for why
+   dragging moved here instead of being the whole row's own cursor. Deliberately
+   narrower than the other icon columns (32px): it's a plain glyph, not an
+   `.icon-btn` with its own hover-background click target, so it only needs
+   room for the glyph itself plus a small edge inset — not a 32px hit box —
+   which keeps adding it from pushing the table noticeably wider. The declared
+   `width` here is a floor, not a cap: table auto-layout (the default, no
+   `table-layout: fixed` anywhere) never shrinks a column below its content's
+   own minimum, so this only actually gets narrower by shrinking the icon and
+   padding themselves, not this number alone — and the column's *actual*
+   minimum is whichever of the header or body cell needs more room: the
+   header cell was still getting `thead th`'s generic `padding: 9px 12px`
+   (12px each side, for an empty label), which alone is wider than this
+   whole column is supposed to be, and silently won since a column can't
+   render narrower than its own header. */
 th:first-child {
+  width: 11px;
+  padding: 9px 0 9px 6px;
+}
+td.drag-handle {
+  width: 11px;
+  padding: 4px 0 4px 6px;
+  text-align: center;
+  color: var(--muted);
+  cursor: grab;
+}
+td.drag-handle:hover {
+  color: var(--text);
+}
+/* The glyph itself, not the button: a bare inline `<svg>` (unlike the other
+   row icons, which are wrapped in a `.icon-btn`/`.play-btn` flex container)
+   defaults to `vertical-align: baseline`, which reserves invisible descender
+   space *below* it the way a line of text would for a letter like "g" — that
+   phantom space sits only on the bottom, so centering the (now taller-than-
+   the-icon) line box within the row leaves the icon itself sitting above
+   true center. `display: block` removes it from that line-box/baseline
+   accounting entirely; `margin: 0 auto` replaces the horizontal centering
+   `text-align: center` no longer provides once it's block-level. */
+td.drag-handle svg {
+  display: block;
+  margin: 0 auto;
+}
+/* Dragging only makes sense against the natural order a column sort would
+   override — see the `sort` doc comment in ResultsTable.tsx. The mousedown
+   handler already no-ops in that state; this keeps the cursor from
+   advertising a drag that wouldn't do anything. */
+table.sorted td.drag-handle {
+  cursor: default;
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+/* Reveal-in-file-browser button column. Left padding used to be 10px to
+   clear the table's own rounded corner back when this was the first column
+   — now that the drag handle is, its own left padding already provides that
+   clearance, so keeping 10px here just stacked a second gap on top of it
+   (the "too wide" gap right after the drag handle). Matches its own right
+   padding now, like the other icon columns. */
+th:nth-child(2) {
   width: 32px;
 }
 td.reveal {
   width: 32px;
-  padding: 4px 4px 4px 10px;
+  padding: 4px 4px 4px 4px;
   text-align: center;
+}
+/* See the .tsx comment: the magnifying glass's circle sits a unit above the
+   icon's own 24×24 center, so it reads as slightly high even though the
+   button's own box-centering is exact. */
+.reveal-icon {
+  margin-top: 1px;
 }
 
 /* Thumbnail / hover-to-preview column, right after the reveal button. */
-th:nth-child(2) {
+th:nth-child(3) {
   width: 32px;
 }
 td.thumb {

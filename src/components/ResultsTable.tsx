@@ -106,6 +106,7 @@ export function ResultsTable({
   const showBadge = files.some((f) => f.badge != null);
 
   const headers: { label: string; sort?: SortColumn }[] = [
+    { label: "" }, // drag handle
     { label: "" }, // reveal button
     { label: "" }, // thumbnail / play button
     { label: "File", sort: "file" },

@@ -5,7 +5,7 @@
 // immediately and fills in later without needing a distinct loading state.
 
 import { useEffect, useRef, useState } from "react";
-import { Music, Play, Search, Square, Trash2 } from "lucide-react";
+import { GripVertical, Music, Play, Search, Square, Trash2 } from "lucide-react";
 
 import type { CoverArt, FileAnalysis } from "../types";
 import { coverDataUrl, fmtCutoff, fmtDuration, fmtSize, splitStem } from "../format";
@@ -53,6 +53,15 @@ export interface ResultRowProps {
   /// whatever was typed.
   onCancelRename: () => void;
   onSubmitRename: (newStem: string) => void;
+  /// Starts a manual reorder — wired only to the drag-handle cell (the dots
+  /// before the reveal button), not the row as a whole. Hovering *anywhere*
+  /// on the row used to show a grab cursor, but a handful of cells
+  /// (`.has-tip`, for the filename's full-path tooltip and several detection
+  /// columns) set `cursor: help` on themselves, which — being more specific
+  /// than the row's own cursor rule — silently won there instead, so those
+  /// cells looked undraggable even though the row could still be picked up
+  /// from them. A dedicated handle removes the ambiguity: it's the only
+  /// place the cursor changes, and the only place a drag can start.
   onMouseDown: (ev: React.MouseEvent) => void;
   onRowClick: (ev: React.MouseEvent) => void;
 }
@@ -107,10 +116,31 @@ export function ResultRow({
     nameInputRef.current?.select();
   }, [editing, f.file_name]);
 
+  // The only place the row can be picked up — see `onMouseDown`'s doc
+  // comment above for why this replaced a whole-row grab cursor. Not an
+  // `IconButton`: it has no click of its own (only a drag), so it skips that
+  // component's hover background/click-target box and just changes the
+  // cursor, kept as narrow as the glyph itself so this column doesn't widen
+  // the table next to the other 32px icon columns.
+  const dragHandleCell = (
+    <td className="drag-handle" onMouseDown={onMouseDown}>
+      <GripVertical size={11} strokeWidth={1.6} aria-hidden="true" />
+    </td>
+  );
+
   const revealCell = (
     <td className="reveal">
       <IconButton
-        icon={<Search size={14} strokeWidth={1.8} />}
+        // Lucide's Search glyph isn't vertically balanced within its own
+        // 24×24 box: the magnifying glass's circle (the icon's actual visual
+        // weight) is centered a full unit above the box's true center, with
+        // only the thin diagonal handle reaching down to square up the
+        // bounding box on paper — so flush-centering the box (which is
+        // otherwise pixel-exact here, 20 − 14 = 6, an even remainder) still
+        // reads as sitting slightly high. Same class of fix as the play
+        // button's own icon nudge (PlaybackTransport.tsx): nudge the glyph,
+        // not the box.
+        icon={<Search size={14} strokeWidth={1.8} className="reveal-icon" />}
         title="Reveal in file browser"
         onMouseDown={stop}
         onClick={(ev) => {
@@ -211,18 +241,18 @@ export function ResultRow({
   );
 
   if (f.error) {
-    // reveal + thumbnail + name precede, delete trails.
+    // drag handle, then reveal + thumbnail + name precede, delete trails.
     return (
       <tr
         data-path={f.path}
         className={rowClass(selected, dragging, dropEdge)}
-        onMouseDown={onMouseDown}
         onClick={onRowClick}
       >
+        {dragHandleCell}
         {revealCell}
         <td className="thumb" />
         {nameCell}
-        <td colSpan={columnCount - 4} className="c-bad">
+        <td colSpan={columnCount - 5} className="c-bad">
           Error: {f.error}
         </td>
         {deleteCell}
@@ -234,9 +264,9 @@ export function ResultRow({
     <tr
       data-path={f.path}
       className={rowClass(selected, dragging, dropEdge)}
-      onMouseDown={onMouseDown}
       onClick={onRowClick}
     >
+      {dragHandleCell}
       {revealCell}
       {thumbCell}
       {nameCell}
