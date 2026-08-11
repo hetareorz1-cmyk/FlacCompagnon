@@ -16,7 +16,7 @@
      focus/hover ring, reads as overlapping "0:00" without this gap — the
      row's general `gap` alone isn't enough since it's shared by every pair
      in the row, not sized for this one. */
-  margin-right: 8px;
+  margin-right: 16px;
 }
 /* Always takes up its full width — unlike an earlier version that animated
    width from 0, which shrank the seek track by that same amount while
@@ -26,7 +26,11 @@
    row as a whole, so muting via the icon can't also flash the slider open. */
 .playback-volume-slider {
   width: 72px;
-  margin-left: 2px;
+  /* Same reasoning as `.playback-volume`'s own `margin-right`: at minimum
+     volume the icon is Mute (see `volumeIcon`), a wider glyph than the
+     others, and without this gap its own edge reads as overlapping the
+     track that starts right after it. */
+  margin-left: 8px;
   opacity: 0;
   transition: opacity 0.15s ease;
 }

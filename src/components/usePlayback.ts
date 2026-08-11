@@ -127,12 +127,32 @@ export function usePlayback(
   }, []);
 
   const toggleMute = useCallback(() => {
+    // Flipping the `muted` flag at volume 0 would be inaudible either way —
+    // the button would look like it does nothing. Jump straight to full
+    // volume instead: an earlier version tried to restore whatever level the
+    // slider was at just before it reached 0, but that made the button's
+    // effect unpredictable in practice (a single click straight to 0 leaves
+    // "the level before" at whatever it happened to already be, which isn't
+    // something the user can see or anticipate) — full volume is at least
+    // always the same, known result.
+    // Rounded, not a bare `=== 0`: repeated keyboard nudges can leave a
+    // floating-point residue like 5e-17 after clamping toward 0 (see
+    // `volumeIcon` in PlaybackSeekBar.tsx for the same issue).
+    if (Math.round(volume * 100) === 0) {
+      setVolumeState(1);
+      api.setVolume(1).catch(() => {});
+      if (muted) {
+        setMuted(false);
+        api.setMuted(false).catch(() => {});
+      }
+      return;
+    }
     setMuted((m) => {
       const next = !m;
       api.setMuted(next).catch(() => {});
       return next;
     });
-  }, []);
+  }, [volume, muted]);
 
   // Auto-advance to the next row in display order when a track ends on its
   // own; stop at the end of the list. Subscribed once — the handler reads the
