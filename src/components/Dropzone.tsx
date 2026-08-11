@@ -21,8 +21,9 @@ export function Dropzone({ dragOver }: DropzoneProps) {
           <strong>Drop a folder or audio files here</strong>
         </p>
         <p className="muted">
-          Drop more anytime to add them to the list; use Reset to start over. Files are only ever
-          read, never modified — nothing is written unless you save a report or generate
+          Drop more anytime to add them to the list; use Reset to start over. Analyzing a file
+          never modifies it — nothing on disk changes unless you explicitly edit tags or cover
+          art, rename or renumber tracks, save a report, export a playlist, or generate
           spectrograms. You can also drop a previously-saved <code>.json</code> report here to
           reload it without re-analyzing.
         </p>
