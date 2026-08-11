@@ -12,7 +12,7 @@
 // same reason: the pointer can leave the track's own bounds mid-drag and
 // still needs to keep updating the position.
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Volume1, Volume2, VolumeX } from "lucide-react";
 import { fmtDuration } from "../format";
 import { IconButton } from "./IconButton";
@@ -58,6 +58,9 @@ export function PlaybackSeekBar({
   const trackRef = useRef<HTMLDivElement>(null);
   const seekDragging = useRef(false);
   const disabled = duration == null || duration <= 0;
+  // Persists across tracks (not reset on load) — most players treat this as a
+  // standing display preference, not a per-track toggle.
+  const [showRemaining, setShowRemaining] = useState(false);
 
   const volumeTrackRef = useRef<HTMLDivElement>(null);
   const volumeDragging = useRef(false);
@@ -170,8 +173,24 @@ export function PlaybackSeekBar({
         <div className="playback-track-fill" style={{ width: `${pct}%` }} />
         <div className="playback-track-head" style={{ left: `${pct}%` }} />
       </div>
-      <span className="playback-time playback-time-total">
-        {duration != null ? fmtDuration(duration) : "—:—"}
+      <span
+        className="playback-time playback-time-total"
+        role="button"
+        tabIndex={0}
+        title={showRemaining ? "Show total duration" : "Show remaining time"}
+        onClick={() => setShowRemaining((v) => !v)}
+        onKeyDown={(ev) => {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            setShowRemaining((v) => !v);
+          }
+        }}
+      >
+        {duration == null
+          ? "—:—"
+          : showRemaining
+            ? `-${fmtDuration(Math.max(0, duration - position))}`
+            : fmtDuration(duration)}
       </span>
     </div>
   );

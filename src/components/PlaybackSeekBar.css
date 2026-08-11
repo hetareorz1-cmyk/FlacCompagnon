@@ -56,8 +56,20 @@
   font-variant-numeric: tabular-nums;
   min-width: 30px;
 }
+/* Clicking toggles total duration/remaining time (see PlaybackSeekBar.tsx) —
+   cursor and focus ring signal that, unlike `.playback-time` (elapsed, on the
+   left), this one responds. */
 .playback-time-total {
   text-align: right;
+  cursor: pointer;
+}
+.playback-time-total:hover {
+  color: var(--text);
+}
+.playback-time-total:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .playback-track {
