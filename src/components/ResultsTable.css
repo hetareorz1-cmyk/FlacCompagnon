@@ -3,10 +3,17 @@
   overflow: auto;
   overscroll-behavior: contain; /* don't propagate scroll / bounce to the window */
   border: 1px solid var(--border);
+  /* No bottom border/radius: the footer (Footer.css) is grafted directly
+     onto this box as its next sibling in `.results`, flush with zero gap —
+     its own top border supplies the one line at the seam, and its own
+     bottom corners pick up the rounding this box gives up here. Two
+     touching 1px borders would otherwise double up into a visibly thicker
+     line. */
+  border-bottom: none;
   /* Same tier as .tag-panel/.dropzone/.progress — this, the Dropzone and
      Progress take turns filling the same spot in the layout, so a mismatched
      radius here was the most visible version of the inconsistency. */
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   background: var(--bg-elev);
 }
 table {
@@ -25,6 +32,46 @@ thead th {
   color: var(--muted);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+}
+/* A sortable header's own padding moves onto `.th-sort` below, so that
+   button — not just its text — fills the whole cell and the entire header
+   area is clickable, not only the label. */
+thead th:has(.th-sort) {
+  padding: 0;
+}
+
+/* A sortable column header (see tableSort.ts) — a plain button so it's
+   keyboard-reachable, filling its `<th>` completely (see the `:has` rule
+   above) so clicking anywhere in the header cell sorts, not just the text
+   itself. The chevron only renders for whichever column is currently the
+   active sort; every other sortable header stays plain text until hovered,
+   so the row of headers doesn't read as fifteen buttons at rest. */
+.th-sort {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  padding: 9px 12px;
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.th-sort:hover {
+  background: var(--bg-elev);
+  color: var(--text);
+}
+
+/* While a column sort overrides the natural order, dragging a row has no
+   coherent destination — see the `sort` doc comment in ResultsTable.tsx. */
+table.sorted tbody tr {
+  cursor: default;
 }
 tbody td {
   padding: 8px 12px;

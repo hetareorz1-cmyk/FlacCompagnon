@@ -11,11 +11,13 @@ import * as api from "./api";
 import { commonDir, fileSearchText, matchesSearch } from "./format";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { Dropzone } from "./components/Dropzone";
+import { Footer } from "./components/Footer";
 import { DropGuard, Progress } from "./components/Progress";
 import { PlaylistFormatModal } from "./components/PlaylistFormatModal";
 import { ResultsSummary } from "./components/ResultsSummary";
 import { ResultsTable } from "./components/ResultsTable";
 import { TagPanel, type TagPanelHandle } from "./components/TagPanel";
+import { nextSort, sortFiles, type SortColumn, type SortState } from "./components/tableSort";
 import { TopBar } from "./components/TopBar";
 import { useAnalysis } from "./components/useAnalysis";
 import {
@@ -27,6 +29,7 @@ import {
 import { useExports } from "./components/useExports";
 import { useNativeDrop } from "./components/useNativeDrop";
 import { usePlayback } from "./components/usePlayback";
+import { usePlaybackQueue } from "./components/usePlaybackQueue";
 import {
   useSelection,
   type SelectionModifiers,
@@ -69,11 +72,11 @@ export function App() {
     [analysis.orderedFiles],
   );
 
-  // Search box in the top bar: a pure display filter over the table. Nothing
-  // else — playback order, the selection, drag-reorder and every export —
-  // reads from `analysis.orderedFiles`/`orderedPaths` directly and never
-  // learns this filter exists, so hiding a row here can't skip it during
-  // playback or drop it from a CSV/JSON/M3U export.
+  // Search box in the top bar: a pure display filter over the table. The
+  // selection, drag-reorder and every export read from
+  // `analysis.orderedFiles`/`orderedPaths` directly and never learn this
+  // filter exists, so hiding a row here can't drop it from a CSV/JSON/M3U
+  // export. Playback is the one exception — see `displayedPaths` below.
   //
   // Matches against everything the row actually shows (`fileSearchText`), not
   // just the file name — so "24-bit", "transcoded" or "flac" filters the list
@@ -89,6 +92,32 @@ export function App() {
     }
     return matches;
   }, [analysis.orderedFiles, hasSearchQuery, searchQuery]);
+
+  // Column sorting (ResultsTable's headers) — state lives here, not in
+  // ResultsTable, for the same reason `displayedPaths` below exists: nothing
+  // sorted by default (`null` = the natural/drag order the table opens in).
+  const [sort, setSort] = useState<SortState | null>(null);
+  const onSortChange = useCallback((column: SortColumn) => {
+    setSort((s) => nextSort(s, column));
+  }, []);
+
+  // What the table is actually showing right now — filtered by the search
+  // box, then sorted if a column sort is active. Unlike `visiblePaths`
+  // above, this *does* drive playback: the footer's Play button starting
+  // "the wrong track" (the first one in import order, not the first one on
+  // screen) is confusing in a way dropping a hidden row from a CSV export
+  // never would be, so Play/Previous/Next (usePlaybackQueue) and the natural
+  // end-of-track auto-advance (usePlayback) both walk this list instead of
+  // the raw `orderedPaths`. Exports and drag-reorder are unaffected — they
+  // never read this.
+  const displayedFiles = useMemo(() => {
+    const filtered =
+      visiblePaths == null
+        ? analysis.orderedFiles
+        : analysis.orderedFiles.filter((f) => visiblePaths.has(f.path));
+    return sort ? sortFiles(filtered, sort) : filtered;
+  }, [analysis.orderedFiles, visiblePaths, sort]);
+  const displayedPaths = useMemo(() => displayedFiles.map((f) => f.path), [displayedFiles]);
 
   const selection = useSelection(orderedPaths);
   const { pruneSelection } = selection;
@@ -165,8 +194,23 @@ export function App() {
     setPendingAction(null);
   }, [pendingAction]);
 
-  const playback = usePlayback(orderedPaths, showToast);
+  // `displayedPaths`, not `orderedPaths`: both the natural end-of-track
+  // auto-advance (inside usePlayback) and the footer's transport buttons
+  // (usePlaybackQueue, below) should walk the table exactly as it's
+  // currently shown — filtered and sorted — not the raw import order. See
+  // `displayedPaths`'s own doc comment above.
+  const playback = usePlayback(displayedPaths, showToast);
   useTagPrefetch(orderedPaths, cache.fetchMissing);
+
+  // What the footer's transport buttons operate over — see the hook's own
+  // doc comment for the selection-count rules (0/1/many selected).
+  const playbackQueue = usePlaybackQueue({
+    orderedPaths: displayedPaths,
+    selectedPaths: selection.selectedPaths,
+    nowPlaying: playback.nowPlaying,
+    play: playback.play,
+    togglePause: playback.togglePause,
+  });
 
   const exports = useExports({
     report: analysis.report,
@@ -433,6 +477,8 @@ export function App() {
                   nowPlaying={playback.nowPlaying}
                   selectedPaths={selection.selectedPaths}
                   visiblePaths={visiblePaths}
+                  sort={sort}
+                  onSortChange={onSortChange}
                   editingPath={editingPath}
                   renameBusy={renameBusy}
                   onSelectRow={guardedSelectRow}
@@ -447,6 +493,23 @@ export function App() {
                   }
                   onTogglePlay={playback.togglePlay}
                   onDelete={deleteRow}
+                />
+                <Footer
+                  files={analysis.orderedFiles}
+                  selectedPaths={selection.selectedPaths}
+                  nowPlaying={playback.nowPlaying}
+                  paused={playback.paused}
+                  position={playback.position}
+                  volume={playback.volume}
+                  muted={playback.muted}
+                  canGoPrevious={playbackQueue.canGoPrevious}
+                  canGoNext={playbackQueue.canGoNext}
+                  onPrevious={playbackQueue.onPrevious}
+                  onTogglePause={playbackQueue.onPlayPause}
+                  onNext={playbackQueue.onNext}
+                  onSeek={playback.seek}
+                  onToggleMute={playback.toggleMute}
+                  onVolumeChange={playback.setVolume}
                 />
               </section>
             )}

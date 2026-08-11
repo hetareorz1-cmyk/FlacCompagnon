@@ -172,6 +172,13 @@ export interface PlaybackLevel {
   level: number;
 }
 
+// The current playhead, throttled the same way as `PlaybackLevel` — drives
+// the footer's seek bar.
+export interface PlaybackPosition {
+  request_id: number;
+  position_secs: number;
+}
+
 // --- Online tag lookup (MusicBrainz + Discogs) -------------------------------
 
 export type LookupSource = "MusicBrainz" | "Discogs";

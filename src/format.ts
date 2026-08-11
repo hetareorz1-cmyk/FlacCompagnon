@@ -44,6 +44,19 @@ export function fmtDuration(secs: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+/// Same idea as `fmtDuration`, but for a summed total (the footer's "N files,
+/// H:MM:SS, X GB" stats) rather than a single track — hours are broken out
+/// once the total reaches 60 minutes, since a whole library reading
+/// "743:12" is far harder to place than "12:23:12".
+export function fmtDurationLong(secs: number): string {
+  const t = Math.round(secs);
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = t % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 /// File size from the exact byte count the Rust core read off the filesystem.
 ///
 /// Uses **decimal** units (1 kB = 1000 bytes), which is what macOS Finder and

@@ -1,0 +1,41 @@
+.playback-transport {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Bigger than the standard 20×20 .icon-btn box and circular, like a media
+   player's own play/pause — the one control in the footer meant to stand out
+   a little, but only a little: a solid accent-filled disc read as too heavy
+   next to the plain prev/next icons either side of it, so the circle is a
+   soft tint instead of a solid fill, with the icon itself in the accent
+   colour rather than white-on-blue. Compound selectors
+   (`.icon-btn.playback-transport-playpause`, not just the class alone) so
+   this reliably beats `.icon-btn`'s own hover/disabled rules regardless of
+   CSS import order. */
+.icon-btn.playback-transport-playpause {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+.icon-btn.playback-transport-playpause:hover {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  color: var(--accent);
+}
+.icon-btn.playback-transport-playpause:disabled {
+  background: var(--bg-elev2);
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* See the .tsx comment: the Play triangle's own visual weight sits left of
+   its bounding box's true center, so it needs a small nudge to look centered
+   inside the round button — Pause's two bars are already symmetric and stay
+   untouched. */
+.playback-play-icon {
+  margin-left: 1.5px;
+}

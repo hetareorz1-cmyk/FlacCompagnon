@@ -1,8 +1,8 @@
 //! Single-track audio playback for the results table's hover-to-preview
-//! button — entirely separate from the detection/analysis engine, which
-//! never touches this module. Decoding reuses
-//! `flaccompagnon_core::decode::PcmStreamDecoder` (Symphonia); output goes
-//! through `cpal`.
+//! button and the app's footer transport — entirely separate from the
+//! detection/analysis engine, which never touches this module. Decoding
+//! reuses `flaccompagnon_core::decode::PcmStreamDecoder` (Symphonia); output
+//! goes through `cpal`.
 //!
 //! Decoding is progressive: `build_stream` only reads the container header
 //! (via `PcmStreamDecoder::open`) before opening the audio device, then
@@ -17,15 +17,28 @@
 //! it never leaves the thread that created it: one dedicated "audio thread",
 //! started once from Tauri's `setup` hook, owns every `Stream` for its
 //! entire lifetime and is only ever talked to through a channel of [`Cmd`]s.
-//! `play`/`stop` (called from the `play_track`/`stop_playback` Tauri
-//! commands, inside `spawn_blocking`) just send a command and block on a
-//! one-shot reply.
+//! `play`/`stop`/`pause`/`resume`/`seek` (called from the matching
+//! `*_playback` Tauri commands, inside `spawn_blocking`) just send a command
+//! and block on a one-shot reply.
 //!
-//! Playback is intentionally simple: play or stop, nothing else — no pause,
-//! seek or volume control. When a track finishes on its own, a
-//! `playback://finished` event lets the frontend decide whether to advance
-//! to the next row; the queue itself lives entirely in the frontend, which
-//! already knows the table's display order.
+//! Pause and resume are `cpal::Stream::pause()`/`play()` — the stream itself
+//! stays open, so resuming is instant and the decode buffer keeps whatever
+//! it already had. Seeking moves a shared playback position (in frames,
+//! behind a `Mutex` the output callback also reads every buffer) rather than
+//! rebuilding the stream; volume and mute are two global atomics the same
+//! callback multiplies into every sample it hands to the device, after
+//! reading them and before the level meter measures them — muted or quiet
+//! audio should look quiet on the results table's equalizer bars too, not
+//! just sound quiet. None of this touches the decode thread or the
+//! `StreamBuffer` it fills: seeking past what has decoded so far just plays
+//! silence until the buffer catches up, exactly like the normal startup
+//! buffering does.
+//!
+//! When a track finishes on its own, a `playback://finished` event lets the
+//! frontend decide whether to advance to the next row — the queue itself
+//! lives entirely in the frontend, which already knows the table's display
+//! order. `playback://position` reports the current playhead on the same
+//! throttled cadence as `playback://level`, driving the footer's seek bar.
 //!
 //! # Size
 //!
@@ -40,7 +53,7 @@
 //! looked local and safe.
 
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::thread;
@@ -52,10 +65,25 @@ use tauri::{AppHandle, Emitter};
 enum Cmd {
     Play(PathBuf, u64, mpsc::Sender<Result<(), String>>),
     Stop,
+    Pause(mpsc::Sender<Result<(), String>>),
+    Resume(mpsc::Sender<Result<(), String>>),
+    Seek(f64, mpsc::Sender<Result<(), String>>),
 }
 
 static SENDER: OnceLock<mpsc::Sender<Cmd>> = OnceLock::new();
 static REQUEST_SEQ: AtomicU64 = AtomicU64::new(0);
+
+/// Playback volume, 0.0–1.0, applied as a plain gain multiplier in the
+/// output callback. Stored as the bit pattern of an `f32` (`AtomicU32` has no
+/// `f32` counterpart) — `to_bits`/`from_bits` are lossless and don't reorder
+/// the value, so this is exactly the float it looks like, just parked in an
+/// atomic that can be shared with the callback without a lock.
+static VOLUME_BITS: AtomicU32 = AtomicU32::new(1.0f32.to_bits());
+
+/// Independent of `VOLUME_BITS` so un-muting restores the exact volume the
+/// user had set, rather than the mute button having to remember and
+/// reapply it.
+static MUTED: AtomicBool = AtomicBool::new(false);
 
 /// Payload of the `playback://finished` event. `request_id` lets the
 /// frontend ignore a stale notification from a track that was already
@@ -76,24 +104,43 @@ pub struct Level {
     pub level: f32,
 }
 
-/// How often the output callback is allowed to emit a `playback://level`
-/// event. The callback itself runs far more often than this (every few
-/// milliseconds, at the mercy of the device's buffer size) — throttling here
-/// keeps the IPC traffic to something a UI update actually needs, rather than
-/// firing an event per callback.
-const LEVEL_EMIT_INTERVAL: std::time::Duration = std::time::Duration::from_millis(60);
+/// Payload of the `playback://position` event, driving the footer's seek
+/// bar. `position_secs` is the playhead measured against the stream's own
+/// rate (the file's native rate on the common path, the device's rate on the
+/// resampling fallback — see `BuiltStream::rate`), so it stays accurate
+/// either way.
+#[derive(Clone, Serialize)]
+pub struct Position {
+    pub request_id: u64,
+    pub position_secs: f64,
+}
 
-/// A currently-open output stream plus the means to tell its background
-/// decode thread (if it has one) to give up early — used when the track is
-/// stopped or superseded by a new one before it finished decoding on its
-/// own.
+/// How often the output callback is allowed to emit a `playback://level` /
+/// `playback://position` pair. The callback itself runs far more often than
+/// this (every few milliseconds, at the mercy of the device's buffer size) —
+/// throttling here keeps the IPC traffic to something a UI update actually
+/// needs, rather than firing an event per callback.
+const EMIT_INTERVAL: std::time::Duration = std::time::Duration::from_millis(60);
+
+/// A currently-open output stream plus everything a command arriving later
+/// (pause, resume, seek, stop) needs to act on it.
 struct PlayingTrack {
-    // Never read directly — its only job is to stay alive for as long as
-    // playback should continue. Dropping it (replacing/stopping the track)
-    // tears down the `cpal` stream and stops audio output.
-    #[allow(dead_code)]
+    // Read directly by `Cmd::Pause`/`Cmd::Resume` (`stream.pause()`/
+    // `.play()`) — dropping it (replacing/stopping the track) tears down the
+    // `cpal` stream and stops audio output.
     stream: cpal::Stream,
     cancel_decode: Arc<AtomicBool>,
+    /// Current playhead, in frames — shared with the output callback, which
+    /// advances it every buffer, and with `Cmd::Seek`, which overwrites it.
+    /// Both go through this same `Mutex` rather than an atomic: a seek has to
+    /// fully happen-before or happen-after one callback's "read, then
+    /// advance" pair, never in the middle of it, or the advance would
+    /// silently undo the seek.
+    position: Arc<Mutex<usize>>,
+    /// The rate `position` is measured against — the file's own rate on the
+    /// streaming path, the device's on the resampling fallback.
+    rate: u32,
+    channels: usize,
 }
 
 /// Start the dedicated audio thread. Called once from Tauri's `setup` hook;
@@ -117,6 +164,38 @@ fn audio_thread(rx: mpsc::Receiver<Cmd>, app: AppHandle) {
                     track.cancel_decode.store(true, Ordering::SeqCst);
                 }
             }
+            Cmd::Pause(reply) => {
+                let result = match &current {
+                    Some(track) => track.stream.pause().map_err(|e| e.to_string()),
+                    None => Err("Nothing is playing.".to_string()),
+                };
+                let _ = reply.send(result);
+            }
+            Cmd::Resume(reply) => {
+                let result = match &current {
+                    Some(track) => track.stream.play().map_err(|e| e.to_string()),
+                    None => Err("Nothing is playing.".to_string()),
+                };
+                let _ = reply.send(result);
+            }
+            Cmd::Seek(seconds, reply) => {
+                let result = match &current {
+                    Some(track) => {
+                        // `as usize` on a float is a saturating cast in Rust
+                        // (stable since 1.45, never UB): a negative or NaN
+                        // input (already floored to 0.0 by `.max(0.0)`, but
+                        // defence in depth since this ultimately comes from
+                        // the frontend) lands on 0, an absurdly large one on
+                        // `usize::MAX` — never a panic on a value this
+                        // command doesn't control.
+                        let frame = seconds.max(0.0) * track.rate as f64;
+                        *track.position.lock().unwrap() = frame as usize;
+                        Ok(())
+                    }
+                    None => Err("Nothing is playing.".to_string()),
+                };
+                let _ = reply.send(result);
+            }
             Cmd::Play(path, request_id, reply) => {
                 // Stop whatever was playing — and tell its decode thread to
                 // stop feeding a buffer nothing is reading anymore — before
@@ -125,16 +204,19 @@ fn audio_thread(rx: mpsc::Receiver<Cmd>, app: AppHandle) {
                     track.cancel_decode.store(true, Ordering::SeqCst);
                 }
                 match build_stream(&path, app.clone(), request_id) {
-                    Ok((stream, cancel_decode)) => match stream.play() {
+                    Ok(built) => match built.stream.play() {
                         Ok(()) => {
                             current = Some(PlayingTrack {
-                                stream,
-                                cancel_decode,
+                                stream: built.stream,
+                                cancel_decode: built.cancel_decode,
+                                position: built.position,
+                                rate: built.rate,
+                                channels: built.channels,
                             });
                             let _ = reply.send(Ok(()));
                         }
                         Err(e) => {
-                            cancel_decode.store(true, Ordering::SeqCst);
+                            built.cancel_decode.store(true, Ordering::SeqCst);
                             let _ = reply.send(Err(e.to_string()));
                         }
                     },
@@ -168,6 +250,48 @@ pub fn stop() -> Result<(), String> {
     sender
         .send(Cmd::Stop)
         .map_err(|_| "Playback engine is not running.".to_string())
+}
+
+fn round_trip(cmd_of_reply: impl FnOnce(mpsc::Sender<Result<(), String>>) -> Cmd) -> Result<(), String> {
+    let sender = SENDER.get().ok_or("Playback engine not started.")?;
+    let (reply_tx, reply_rx) = mpsc::channel();
+    sender
+        .send(cmd_of_reply(reply_tx))
+        .map_err(|_| "Playback engine is not running.".to_string())?;
+    reply_rx
+        .recv()
+        .map_err(|_| "Playback engine did not respond.".to_string())?
+}
+
+/// Pause the currently playing track in place (the stream stays open —
+/// resuming is instant and picks up exactly where playback left off).
+pub fn pause() -> Result<(), String> {
+    round_trip(Cmd::Pause)
+}
+
+/// Resume a track paused with [`pause`].
+pub fn resume() -> Result<(), String> {
+    round_trip(Cmd::Resume)
+}
+
+/// Move the currently playing track's playhead to `seconds` from its start.
+/// Seeking past what has decoded so far plays silence until decoding catches
+/// up, the same way startup buffering already does.
+pub fn seek(seconds: f64) -> Result<(), String> {
+    round_trip(|reply| Cmd::Seek(seconds, reply))
+}
+
+/// Set the playback gain, clamped to 0.0–1.0. Takes effect on the very next
+/// output buffer — there is no separate "apply" step and nothing to fail on,
+/// so this never blocks on the audio thread the way play/stop/pause/seek do.
+pub fn set_volume(volume: f32) {
+    VOLUME_BITS.store(volume.clamp(0.0, 1.0).to_bits(), Ordering::Relaxed);
+}
+
+/// Mute or unmute without touching the stored volume — see `MUTED`'s doc
+/// comment for why this is a separate flag rather than zeroing the volume.
+pub fn set_muted(muted: bool) {
+    MUTED.store(muted, Ordering::Relaxed);
 }
 
 /// Sample data feeding the output callback: either a buffer a background
@@ -218,9 +342,10 @@ impl SampleSource {
 
 /// Growing sample buffer shared between a background decode thread (the
 /// producer, appending one packet's worth of samples at a time) and the
-/// audio output callback (the consumer, reading from wherever it last left
-/// off). `done` marks that decoding has stopped — successfully finished,
-/// hit an error, or was cancelled — and no more samples are coming.
+/// audio output callback (the consumer, reading from wherever the shared
+/// playback position currently points — see `PlayingTrack::position`).
+/// `done` marks that decoding has stopped — successfully finished, hit an
+/// error, or was cancelled — and no more samples are coming.
 struct StreamBuffer {
     samples: Mutex<Vec<f32>>,
     done: AtomicBool,
@@ -251,11 +376,21 @@ fn spawn_decode_thread(mut decoder: flaccompagnon_core::decode::PcmStreamDecoder
     });
 }
 
-fn build_stream(
-    path: &Path,
-    app: AppHandle,
-    request_id: u64,
-) -> Result<(cpal::Stream, Arc<AtomicBool>), String> {
+/// Everything the `Cmd::Play` handler needs to keep from a successful
+/// `build_stream` call: the open output stream itself, the flag that tells
+/// its background decode thread (if any) to give up early, the shared
+/// playback position (frames — read and advanced by the output callback,
+/// overwritten by a `Cmd::Seek`), and the rate/channel count that position is
+/// measured against.
+struct BuiltStream {
+    stream: cpal::Stream,
+    cancel_decode: Arc<AtomicBool>,
+    position: Arc<Mutex<usize>>,
+    rate: u32,
+    channels: usize,
+}
+
+fn build_stream(path: &Path, app: AppHandle, request_id: u64) -> Result<BuiltStream, String> {
     if matches!(
         path.extension()
             .and_then(|e| e.to_str())
@@ -277,9 +412,10 @@ fn build_stream(
     let decoder =
         flaccompagnon_core::decode::PcmStreamDecoder::open(path).map_err(|e| e.to_string())?;
     let native_channels = decoder.channels.max(1);
+    let native_rate = decoder.sample_rate;
     let native_config = cpal::StreamConfig {
         channels: native_channels as u16,
-        sample_rate: decoder.sample_rate,
+        sample_rate: native_rate,
         buffer_size: cpal::BufferSize::Default,
     };
 
@@ -297,15 +433,23 @@ fn build_stream(
         done: AtomicBool::new(false),
         cancel: cancel.clone(),
     });
+    let position = Arc::new(Mutex::new(0usize));
     if let Ok(stream) = try_build_stream(
         &device,
         native_config,
         SampleSource::Streaming(stream_buf.clone()),
+        position.clone(),
         app.clone(),
         request_id,
     ) {
         spawn_decode_thread(decoder, stream_buf);
-        return Ok((stream, cancel));
+        return Ok(BuiltStream {
+            stream,
+            cancel_decode: cancel,
+            position,
+            rate: native_rate,
+            channels: native_channels,
+        });
     }
 
     // Fallback: the device rejected the file's native configuration (common
@@ -331,39 +475,75 @@ fn build_stream(
         buffer_size: cpal::BufferSize::Default,
     };
     let fallback_cancel = Arc::new(AtomicBool::new(false)); // nothing decodes in the background here
-    try_build_stream(
+    let stream = try_build_stream(
         &device,
         config,
         SampleSource::Static(out_samples),
+        position.clone(),
         app,
         request_id,
     )
-    .map(|stream| (stream, fallback_cancel))
-    .map_err(|e| format!("Could not open the audio output device: {e}"))
+    .map_err(|e| format!("Could not open the audio output device: {e}"))?;
+    Ok(BuiltStream {
+        stream,
+        cancel_decode: fallback_cancel,
+        position,
+        rate: out_rate,
+        channels: out_channels,
+    })
 }
 
 fn try_build_stream(
     device: &cpal::Device,
     config: cpal::StreamConfig,
     source: SampleSource,
+    position: Arc<Mutex<usize>>,
     app: AppHandle,
     request_id: u64,
 ) -> Result<cpal::Stream, cpal::Error> {
-    let mut pos: usize = 0; // only ever touched from the audio callback thread
+    let channels = (config.channels as usize).max(1);
+    let rate = config.sample_rate.max(1);
     let mut finished_emitted = false;
     // `Instant::now()` is a monotonic clock read (no syscall on the platforms
     // this targets), cheap enough to call every callback just to check the
     // throttle — the actual RMS pass only runs once it trips.
-    let mut last_level_emit = std::time::Instant::now();
+    let mut last_emit = std::time::Instant::now();
 
     device.build_output_stream(
         config,
         move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            let (n, drained) = source.read(pos, data);
-            pos += n;
+            // One critical section covers "read the current position, read
+            // samples from it, advance it" — a `Cmd::Seek` arriving from the
+            // audio thread takes the same lock, so it either lands fully
+            // before this section (this callback plays from the new spot) or
+            // fully after (the *next* callback does) — never in the middle,
+            // which is what would let this callback's advance silently
+            // overwrite a seek with a stale value.
+            let (drained, frame_pos_after) = {
+                let mut p = position.lock().unwrap();
+                let frame_pos = *p;
+                let flat_pos = frame_pos.saturating_mul(channels);
+                let (n, drained) = source.read(flat_pos, data);
+                *p = frame_pos + n / channels;
+                (drained, *p)
+            };
 
-            if last_level_emit.elapsed() >= LEVEL_EMIT_INTERVAL {
-                last_level_emit = std::time::Instant::now();
+            // Volume/mute: applied after reading, before the level meter or
+            // the device sees the samples, so muted/quiet audio also looks
+            // quiet on the equalizer bars.
+            let gain = if MUTED.load(Ordering::Relaxed) {
+                0.0
+            } else {
+                f32::from_bits(VOLUME_BITS.load(Ordering::Relaxed))
+            };
+            if gain != 1.0 {
+                for s in data.iter_mut() {
+                    *s *= gain;
+                }
+            }
+
+            if last_emit.elapsed() >= EMIT_INTERVAL {
+                last_emit = std::time::Instant::now();
                 let sum_sq: f32 = data.iter().map(|s| s * s).sum();
                 let rms = if data.is_empty() {
                     0.0
@@ -375,6 +555,14 @@ fn try_build_stream(
                 // an accurate level.
                 let level = (rms * 4.0).min(1.0);
                 let _ = app.emit("playback://level", Level { request_id, level });
+                let position_secs = frame_pos_after as f64 / rate as f64;
+                let _ = app.emit(
+                    "playback://position",
+                    Position {
+                        request_id,
+                        position_secs,
+                    },
+                );
             }
 
             if drained && !finished_emitted {

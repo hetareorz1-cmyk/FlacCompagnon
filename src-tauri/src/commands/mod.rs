@@ -17,7 +17,7 @@
 //! * [`rename`] — rename a file on disk, keeping its extension. The only
 //!   command that changes where a file lives rather than what's in it.
 //! * [`lookup`] — thin wrappers over the online providers in [`crate::lookup`].
-//! * [`player`] — start/stop the preview player.
+//! * [`player`] — start/stop/pause/seek the preview player, and its volume.
 
 pub mod analysis;
 pub mod batch;

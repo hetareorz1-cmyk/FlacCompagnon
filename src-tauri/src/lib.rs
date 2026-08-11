@@ -64,6 +64,11 @@ pub fn run() {
             commands::lookup::lookup_discogs_detail,
             commands::player::play_track,
             commands::player::stop_playback,
+            commands::player::pause_playback,
+            commands::player::resume_playback,
+            commands::player::seek_playback,
+            commands::player::set_volume,
+            commands::player::set_muted,
         ])
         .run(tauri::generate_context!())
         .expect("error while running FlacCompagnon");

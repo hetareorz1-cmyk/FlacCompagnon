@@ -1,0 +1,15 @@
+/* Grafted onto the bottom of the results table (`.table-wrap`, which gives up
+   its own bottom border/corners for exactly this — see the comment there):
+   flat top so the two read as one piece, rounded bottom since this is the
+   last thing in that stack. Same surface/tier otherwise, as if this were
+   simply `.table-wrap`'s own footer row. */
+.footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}

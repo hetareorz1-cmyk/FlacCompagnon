@@ -5,9 +5,11 @@
 // only when at least one file earned a badge.
 
 import { useMemo, useRef } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import type { CoverArt, FileAnalysis } from "../types";
 import { ResultRow } from "./ResultRow";
+import { sortFiles, type SortColumn, type SortState } from "./tableSort";
 import { useRowDrag } from "./useRowDrag";
 import type { SelectionModifiers } from "./useSelection";
 import "./ResultsTable.css";
@@ -31,6 +33,13 @@ export interface ResultsTableProps {
   /// selection/export state, all of which are computed from the full list
   /// upstream, never see a shrunk table. Hiding a row here can't lose it.
   visiblePaths: Set<string> | null;
+  /// `null` means the natural/manual (drag-reordered) order — lifted up to
+  /// App.tsx (not owned here) because Play/Previous/Next and the natural
+  /// end-of-track auto-advance need to walk the exact same order this table
+  /// is showing, not a copy only this component knows about. See
+  /// tableSort.ts's doc comment.
+  sort: SortState | null;
+  onSortChange: (column: SortColumn) => void;
   /// The one row currently showing an editable name field, or `null`.
   editingPath: string | null;
   renameBusy: boolean;
@@ -53,6 +62,8 @@ export function ResultsTable({
   nowPlaying,
   selectedPaths,
   visiblePaths,
+  sort,
+  onSortChange,
   editingPath,
   renameBusy,
   onSelectRow,
@@ -66,10 +77,18 @@ export function ResultsTable({
 }: ResultsTableProps) {
   const tableRef = useRef<HTMLTableElement>(null);
   const orderedPaths = useMemo(() => files.map((f) => f.path), [files]);
-  const visibleFiles = useMemo(
-    () => (visiblePaths == null ? files : files.filter((f) => visiblePaths.has(f.path))),
-    [files, visiblePaths],
-  );
+
+  // Column sorting only ever changes what's *drawn* here — exports and
+  // drag-reorder keep reading `files`/`orderedPaths` directly and never
+  // learn a sort is active (App.tsx computes its own filtered+sorted list
+  // separately, for Play/Previous/Next and auto-advance — see `sort`'s doc
+  // comment on the props above). Dragging while sorted has no coherent
+  // "where does this row belong" answer, so it's disabled below rather than
+  // silently reordering something the header isn't showing.
+  const visibleFiles = useMemo(() => {
+    const filtered = visiblePaths == null ? files : files.filter((f) => visiblePaths.has(f.path));
+    return sort ? sortFiles(filtered, sort) : filtered;
+  }, [files, visiblePaths, sort]);
 
   // Tracks only the most recent click on *a* name cell — clicking a
   // different row's name in between resets eligibility for both, same as
@@ -86,26 +105,26 @@ export function ResultsTable({
   const showMd5 = files.some((f) => f.flac_md5 != null);
   const showBadge = files.some((f) => f.badge != null);
 
-  const headers = [
-    "", // reveal button
-    "", // thumbnail / play button
-    "File",
-    "Format",
-    ...(showBadge ? ["Quality"] : []),
-    "Rate",
-    "Bits",
-    "Real bits",
-    "Length",
-    "Size",
-    "Detections",
-    "Cutoff",
-    "Ch",
-    "Stereo",
-    "Clipping",
-    "True Peak",
-    "Dynamics",
-    ...(showMd5 ? ["MD5"] : []),
-    "", // delete button
+  const headers: { label: string; sort?: SortColumn }[] = [
+    { label: "" }, // reveal button
+    { label: "" }, // thumbnail / play button
+    { label: "File", sort: "file" },
+    { label: "Format", sort: "format" },
+    ...(showBadge ? [{ label: "Quality", sort: "badge" as const }] : []),
+    { label: "Rate", sort: "rate" },
+    { label: "Bits", sort: "bits" },
+    { label: "Real bits", sort: "realBits" },
+    { label: "Length", sort: "length" },
+    { label: "Size", sort: "size" },
+    { label: "Detections", sort: "detections" },
+    { label: "Cutoff", sort: "cutoff" },
+    { label: "Ch", sort: "channels" },
+    { label: "Stereo", sort: "stereo" },
+    { label: "Clipping", sort: "clipping" },
+    { label: "True Peak", sort: "truePeak" },
+    { label: "Dynamics", sort: "dynamics" },
+    ...(showMd5 ? [{ label: "MD5", sort: "md5" as const }] : []),
+    { label: "" }, // delete button
   ];
 
   const selected = new Set(selectedPaths);
@@ -113,12 +132,30 @@ export function ResultsTable({
 
   return (
     <div className="table-wrap">
-      <table ref={tableRef}>
+      <table ref={tableRef} className={sort ? "sorted" : undefined}>
         <thead>
           <tr>
-            {headers.map((h, i) => (
-              <th key={`${h}-${i}`}>{h}</th>
-            ))}
+            {headers.map((h, i) =>
+              h.sort ? (
+                <th key={`${h.label}-${i}`}>
+                  <button
+                    type="button"
+                    className="th-sort"
+                    onClick={() => onSortChange(h.sort as SortColumn)}
+                  >
+                    {h.label}
+                    {sort?.column === h.sort &&
+                      (sort.direction === "asc" ? (
+                        <ChevronDown size={12} strokeWidth={2.4} />
+                      ) : (
+                        <ChevronUp size={12} strokeWidth={2.4} />
+                      ))}
+                  </button>
+                </th>
+              ) : (
+                <th key={`${h.label}-${i}`}>{h.label}</th>
+              ),
+            )}
           </tr>
         </thead>
         <tbody>
@@ -155,7 +192,12 @@ export function ResultsTable({
                 onDelete={() => onDelete(f.path, selected.has(f.path))}
                 onCancelRename={onCancelRename}
                 onSubmitRename={(newStem) => onSubmitRename(f.path, newStem)}
-                onMouseDown={(ev) => onRowMouseDown(f.path, ev)}
+                onMouseDown={(ev) => {
+                  // See the `sort` doc comment above: dragging only makes
+                  // sense against the natural order the header isn't
+                  // currently overriding.
+                  if (!sort) onRowMouseDown(f.path, ev);
+                }}
                 onRowClick={(ev) => {
                   if (consumeClickSuppression()) return;
 

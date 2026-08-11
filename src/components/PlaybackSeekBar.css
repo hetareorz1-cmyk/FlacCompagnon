@@ -1,0 +1,91 @@
+.playback-seekbar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.playback-volume {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+/* Collapsed to nothing at rest — revealed by hovering anywhere over the
+   icon+slider pair, not just the slider itself, so there's no dead zone
+   between the icon and where the slider appears. */
+.playback-volume-slider {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    width 0.15s ease,
+    opacity 0.15s ease;
+}
+.playback-volume:hover .playback-volume-slider,
+.playback-volume:focus-within .playback-volume-slider {
+  width: 72px;
+  opacity: 1;
+  margin-left: 2px;
+}
+.playback-volume-slider input[type="range"] {
+  width: 70px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.playback-time {
+  flex: none;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+}
+.playback-time-total {
+  text-align: right;
+}
+
+.playback-track {
+  position: relative;
+  flex: 1;
+  max-width: 260px;
+  min-width: 80px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.playback-track::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-elev2);
+}
+.playback-track-fill {
+  position: absolute;
+  left: 0;
+  height: 4px;
+  border-radius: var(--radius-xs);
+  background: var(--accent);
+  pointer-events: none;
+}
+.playback-track-head {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--bg-elev);
+}
+.playback-track.disabled {
+  cursor: default;
+  opacity: 0.5;
+}

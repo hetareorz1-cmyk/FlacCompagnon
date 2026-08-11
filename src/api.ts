@@ -90,6 +90,21 @@ export const playTrack = (path: string) => invoke<number>("play_track", { path }
 
 export const stopPlayback = () => invoke("stop_playback");
 
+// Playback: pause the current track in place (the footer's play/pause
+// button) and resume it — unlike `stopPlayback`, which tears the stream down
+// and forgets the position, this keeps both, so resuming is instant.
+export const pausePlayback = () => invoke("pause_playback");
+export const resumePlayback = () => invoke("resume_playback");
+
+// Playback: move the current track's playhead — the footer's seek bar,
+// dragged or clicked.
+export const seekPlayback = (seconds: number) => invoke("seek_playback", { seconds });
+
+// Playback: volume (0..1) and mute. Plain atomics on the Rust side (see
+// `playback::set_volume`'s doc comment), so neither can fail.
+export const setVolume = (volume: number) => invoke("set_volume", { volume });
+export const setMuted = (muted: boolean) => invoke("set_muted", { muted });
+
 // Online lookup: the tag panel's "Search online" button. Search returns a
 // short candidate list; picking one fetches its full detail (track list +
 // cover) to stage into the tag panel. Discogs calls need the user's own
