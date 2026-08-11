@@ -119,6 +119,41 @@ The split is deliberate: anything that can be tested without a GUI belongs in
   is bigger than the outer radius. (Source: [How to calculate the
   border-radius of nested
   elements](https://douglasmoura.dev/how-to-calculate-the-border-radius-of-nested-elements).)
+- **Colour comes from the `--*` custom properties in `theme.css`, never a
+  hand-picked hex/rgb.** Status colours especially: `--ok`/`--bad`/`--warn`/
+  `--mid` (and the per-detection `--clean`/`--upscaled`/`--upsampled`/
+  `--transcoded`) each mean one specific thing across the whole app — reusing
+  `--bad` for a *different* kind of warning, or introducing a fresh red
+  because `--bad` "felt slightly off" in that one spot, breaks the mapping a
+  user has already learned from the rest of the app. Both palettes (light/
+  dark) live behind the same variable name specifically so a component never
+  has to think about which one is active.
+- **A control's size matches the rendered box of whatever it sits next to,
+  not an arbitrary number.** The default icon button is 20×20 (`.icon-btn`,
+  IconButton.css) — the size to reach for first. When a control genuinely
+  needs to be bigger (it stands alone rather than repeating down a list, or
+  its glyph is too small to read at 20px), size it to match a specific
+  neighbour's *rendered* box — e.g. `.topbar-toolbtn` is 32×32 because that's
+  `.topbar-search`'s own input box (13px text + 7px padding + 1px border each
+  side), not a round number picked by eye. Wrapping same-height controls into
+  a bordered pill (`.topbar-selection-actions`, `.ext-plusminus`) adds that
+  pill's own border on top of each child's box — shrink the children by the
+  border width so the group doesn't end up reading taller than its
+  neighbours.
+- **An icon centred on a colour-filled background must land exactly on both
+  axes**, not just close. Flex centering (`align-items`/`justify-content:
+  center`, the default via `.icon-btn`) splits the box size minus the icon
+  size into two margins; when that remainder is odd (a 28px circle with a
+  13px icon splits 15px into 7.5px each side), the two margins can't both
+  round to the same whole pixel and the icon reads as shifted toward one
+  corner — invisible on a transparent background, obvious on a filled or
+  coloured one, where there's nothing else to draw the eye away from the
+  asymmetry. Either keep the box and icon sizes the same parity (both even,
+  so the split is a whole number), or centre with `position: absolute; top:
+  50%; left: 50%; transform: translate(-50%, -50%)` instead, which centres on
+  the icon's actual — possibly fractional — size rather than a margin that
+  has to round. See `.icon-btn.playback-transport-playpause` in
+  PlaybackTransport.css for the pattern.
 
 ### index.html
 
@@ -218,6 +253,41 @@ Comments explain **why**, not what. The codebase's existing style — a short
 paragraph above a non-obvious function explaining the constraint that shaped it
 (a Tauri quirk, a race, a format limitation) — is the standard to match. Do not
 add comments that restate the code.
+
+## Working from other people's code
+
+An AI assistant working on this repo has read a huge amount of public code
+during training, and can fetch and read live repositories or web pages when
+browsing is available. Left unguided, that's a real risk for a project whose
+whole premise — detecting fake-lossless audio via spectral heuristics —
+overlaps with existing open-source and freeware tools (spectrogram viewers,
+fake-detection utilities, and the like). Asked to "add a heuristic for X," an
+assistant can end up reproducing a known tool's approach, naming, or even its
+bugs without ever being told to copy anything — it just resembles what it has
+already seen. (Source: [Coder avec l'IA sans pomper le projet d'un
+autre ?](https://korben.info/ia-clone-projet-open-source.html) — a shipped app
+pulled after it turned out to share its name, its features, and even its bugs
+with an existing open-source project, entirely unintentionally.)
+
+- **Do not fetch, clone, or read another project's source** (open-source or
+  not) to use as a model for how to implement something here, unless the
+  maintainer explicitly asks and scopes it. Reading a *format specification*
+  or *protocol documentation* is fair game — that's how a decoder gets written
+  correctly — reading another project's *implementation* to copy its structure
+  is not.
+- Implement from the spec and from first principles, not from memory of a
+  specific known codebase. Describing an algorithm in your own words and
+  writing it fresh is fine; reproducing a particular project's actual code —
+  variable names, structure, comments, bugs and all — is not, even unprompted
+  and even recalled from training data rather than fetched live.
+- Before naming anything new that ships to users (a new binary, a new
+  feature), check the name isn't already in use elsewhere first.
+- Before a release, a deliberate comparison pass against the handful of
+  existing tools this app's feature set overlaps with is worth the same
+  checklist status as `cargo clippy`/`cargo test` — not to avoid *similar
+  features* (that's normal and expected of any tool in the same space) but to
+  catch anything that's copied rather than reimplemented: matching interface
+  text, matching internal naming, matching edge-case bugs.
 
 ## Behaviour to preserve
 
