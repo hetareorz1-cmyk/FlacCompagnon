@@ -59,6 +59,53 @@ tbody tr.selected:hover {
   text-overflow: ellipsis;
 }
 
+/* The results table's inline rename (ResultRow.tsx) — only this cell opts
+   back into text selection/editing. The table as a whole disables it (see
+   the `-webkit-user-select: none` comment above) so rows can be dragged by
+   clicking anywhere, but that would otherwise stop the user from being able
+   to select text inside this field to overwrite it. */
+.fname-editing {
+  padding: 4px 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.fname-input {
+  min-width: 0;
+  flex: 1;
+  max-width: 260px;
+  background: var(--bg-elev2);
+  border: 1px solid var(--border);
+  /* Same tier as .tag-field's inputs — a typeable control, not a small
+     in-row icon. */
+  border-radius: var(--radius-md);
+  padding: 3px 6px;
+  font: inherit;
+  color: var(--text);
+  -webkit-user-select: text;
+  user-select: text;
+}
+.fname-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+/* `readonly`, not `disabled`, while a submitted rename is still in flight
+   (see the .tsx comment on `renameBusy`) — this is purely the visual side of
+   that choice. */
+.fname-input[readonly] {
+  opacity: 0.6;
+}
+/* The extension: shown so the user still sees the full name they're
+   changing, but plain text — never part of the editable value or what gets
+   submitted (see rename.rs: the extension is fixed server-side too, this
+   isn't the only thing enforcing it). */
+.fname-ext {
+  flex: none;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Manual row reordering (mousedown-based, see useRowDrag.ts for why). `.pressing`
    gives immediate feedback the instant the mouse goes down — before the
    movement threshold promotes it to an actual drag. Once dragging is under

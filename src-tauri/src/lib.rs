@@ -17,6 +17,11 @@
 //!   CSV/JSON reports, the M3U playlist, the spectrogram PNGs, an extracted
 //!   cover. The JSON report is re-importable by dropping it back onto the
 //!   window.
+//! * **One command renames a file without touching its content**:
+//!   [`commands::rename::rename_file`], from the results table's "click twice
+//!   on the name" — the audio and its tags are untouched, only the file's own
+//!   name on disk changes, and only its stem: the extension is fixed
+//!   server-side too, not just hidden in the UI.
 //! * **[`lookup`] is the only module that touches the network**, and only when
 //!   the user clicks "Search online".
 
@@ -48,6 +53,7 @@ pub fn run() {
             commands::report::load_report,
             commands::files::reveal_in_folder,
             commands::files::open_folder,
+            commands::rename::rename_file,
             commands::tags::read_tags_batch,
             commands::tags::write_tags_batch,
             commands::tags::read_cover_image,

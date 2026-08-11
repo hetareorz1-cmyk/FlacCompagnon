@@ -114,6 +114,15 @@ export interface TagReadResult {
   error: string | null;
 }
 
+// Backs the results table's inline rename — the new path and file name of a
+// file just renamed on disk (`rename_file`). `file_name` comes from the
+// backend rather than being re-derived from `path` on the frontend, so a
+// Windows-style "\" separator doesn't need its own regex here too.
+export interface RenameResult {
+  path: string;
+  file_name: string;
+}
+
 // Rust's `FieldEdit`/`CoverEdit` are three-way (leave alone / clear / set),
 // not a plain optional value — needed so a field the user never touched
 // doesn't clobber files in the selection that had a *different* value than

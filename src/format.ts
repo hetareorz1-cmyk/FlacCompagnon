@@ -121,6 +121,22 @@ export function commonDir(paths: string[]): string {
   return common.join(sep) || sep;
 }
 
+/// Splits a file name into its editable stem and its extension (dot
+/// included, e.g. ".flac"), for the results table's inline rename field —
+/// only the stem is editable there, the extension shows next to it as plain
+/// text. Mirrors `Path::extension()`'s rule on the Rust side (rename.rs)
+/// exactly, so what's pre-filled here is exactly what a resubmit without
+/// changes round-trips back to: a name that's only a leading dot with no
+/// other dot (".hidden") has no extension, anything else splits on the last
+/// dot. This is purely a display convenience — the actual extension the file
+/// ends up with after a rename is decided server-side from the file's real
+/// current path, never from anything this function returns.
+export function splitStem(fileName: string): { stem: string; ext: string } {
+  const dot = fileName.lastIndexOf(".");
+  if (dot <= 0 || dot === fileName.length - 1) return { stem: fileName, ext: "" };
+  return { stem: fileName.slice(0, dot), ext: fileName.slice(dot) };
+}
+
 function nameFrom(path: string, fallback: string): string {
   const segments = path.split(/[\\/]/).filter(Boolean);
   let name = segments.length ? segments[segments.length - 1] : fallback;

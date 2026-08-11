@@ -8,6 +8,7 @@ import type {
   LookupRelease,
   PlaylistEntry,
   PlaylistFormat,
+  RenameResult,
   SpectroSummary,
   TagEdits,
   TagReadResult,
@@ -46,6 +47,14 @@ export const revealInFolder = (path: string) =>
 // `revealInFolder`, which selects a file within its *parent*. Backs the
 // results header's folder icon next to the analyzed root path.
 export const openFolder = (path: string) => invoke("open_folder", { path });
+
+// Renames a file on disk to `newStem` plus its existing extension — the
+// backend re-appends the extension itself rather than trusting a full name
+// from the frontend, so the results table's inline rename can never smuggle
+// a different one through even if this wrapper were bypassed. Returns the
+// new path and file name.
+export const renameFile = (path: string, newStem: string) =>
+  invoke<RenameResult>("rename_file", { path, newStem });
 
 // Tags: read-only batch used to pre-fill the thumbnail column and (later)
 // the tag panel. Errors are per-file (e.g. DSD isn't taggable), not thrown.

@@ -4,10 +4,11 @@
 // renders the same placeholder as "no cover at all" — so the row appears
 // immediately and fills in later without needing a distinct loading state.
 
+import { useEffect, useRef, useState } from "react";
 import { Music, Play, Search, Square, Trash2 } from "lucide-react";
 
 import type { CoverArt, FileAnalysis } from "../types";
-import { coverDataUrl, fmtCutoff, fmtDuration, fmtSize } from "../format";
+import { coverDataUrl, fmtCutoff, fmtDuration, fmtSize, splitStem } from "../format";
 import { IconButton } from "./IconButton";
 import { LiveEqualizerBars } from "./LiveEqualizerBars";
 import "./ResultRow.css";
@@ -37,9 +38,21 @@ export interface ResultRowProps {
   columnCount: number;
   showMd5: boolean;
   showBadge: boolean;
+  /// Shows an editable field instead of plain text — ResultsTable decides
+  /// when this turns on (a second, well-spaced click on an already-sole-
+  /// selected row's name; see its `RENAME_CLICK_GAP_MS`).
+  editing: boolean;
+  /// True while a submitted rename is still in flight — the field goes
+  /// read-only (not `disabled`: a disabled input forces a blur in most
+  /// browsers, which would fire `onCancelRename` mid-request).
+  renameBusy: boolean;
   onReveal: () => void;
   onTogglePlay: () => void;
   onDelete: () => void;
+  /// Escape, or clicking anywhere else (the field's blur) — discards
+  /// whatever was typed.
+  onCancelRename: () => void;
+  onSubmitRename: (newStem: string) => void;
   onMouseDown: (ev: React.MouseEvent) => void;
   onRowClick: (ev: React.MouseEvent) => void;
 }
@@ -69,13 +82,30 @@ export function ResultRow({
   columnCount,
   showMd5,
   showBadge,
+  editing,
+  renameBusy,
   onReveal,
   onTogglePlay,
   onDelete,
+  onCancelRename,
+  onSubmitRename,
   onMouseDown,
   onRowClick,
 }: ResultRowProps) {
   const url = cover ? coverDataUrl(cover) : null;
+
+  const [draftName, setDraftName] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  // Re-seeds from the current name (not just once on mount) every time
+  // editing turns on, and focuses + selects it so typing immediately
+  // replaces the whole stem — the extension after it stays plain text,
+  // never part of the selection or the value submitted.
+  useEffect(() => {
+    if (!editing) return;
+    setDraftName(splitStem(f.file_name).stem);
+    nameInputRef.current?.focus();
+    nameInputRef.current?.select();
+  }, [editing, f.file_name]);
 
   const revealCell = (
     <td className="reveal">
@@ -130,7 +160,36 @@ export function ResultRow({
     </td>
   );
 
-  const nameCell = (
+  const { ext } = splitStem(f.file_name);
+  // Mouse events inside the field are stopped the same way the row's own
+  // buttons already are (`stop`, above) — without it, clicking to place the
+  // caret would also arm `onRowMouseDown`'s drag session, and dragging to
+  // select text inside the field would try to reorder rows instead.
+  const nameCell = editing ? (
+    <td className="fname fname-editing">
+      <input
+        ref={nameInputRef}
+        type="text"
+        className="fname-input"
+        value={draftName}
+        readOnly={renameBusy}
+        onMouseDown={stop}
+        onClick={stop}
+        onChange={(ev) => setDraftName(ev.target.value)}
+        onKeyDown={(ev) => {
+          if (ev.key === "Escape") {
+            ev.preventDefault();
+            onCancelRename();
+          } else if (ev.key === "Enter") {
+            ev.preventDefault();
+            onSubmitRename(draftName);
+          }
+        }}
+        onBlur={onCancelRename}
+      />
+      {ext && <span className="fname-ext">{ext}</span>}
+    </td>
+  ) : (
     <td className="fname has-tip" title={f.path}>
       {f.file_name}
     </td>

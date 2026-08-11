@@ -37,6 +37,8 @@ See [Detection algorithms](#detection-algorithms) below for how each works, and 
 
 A **search field** above the table filters which rows are shown — type a format, a bit depth, a detection name, anything a column displays. It only ever affects the display: playback order, the current selection, drag-reordering, and every export (CSV, JSON, M3U) all keep working off the full list, filtered or not.
 
+The **File** column supports Mp3tag/Finder-style inline renaming: click a row to select it, then click its name again (not a double-click) to edit it. Only the file's stem is editable — the extension is fixed and shown next to it as plain text, so a rename can never accidentally turn a `.flac` into a `.mp3` without actually transcoding it. **Enter** renames the file on disk; **Escape**, or clicking anywhere else, discards the edit and leaves the file untouched.
+
 ### 2. FLAC MD5 verification
 
 Every FLAC file stores an MD5 hash of its decoded audio in the STREAMINFO block. FlacCompagnon reads it natively (no external `flac` binary required) and, by fully decoding the file, recomputes the hash to confirm the audio is intact — the same integrity check as `flac -t`.
@@ -334,9 +336,12 @@ Sub-folders that contain audio each get their own `spectres/` folder next to the
 
 **Analysis never writes to your files.** Every track is opened **read-only** to decode and measure it; the MD5 check reads the FLAC and recomputes the hash in memory without altering anything. Dropping, analyzing, generating spectrograms, saving a report and exporting a playlist all leave your audio byte-for-byte untouched.
 
-The **one** exception is the tag panel: pressing its **Save** button writes the tags (and cover art) you edited back into the selected files. That is an explicit, deliberate action — it never happens automatically, and only the fields you actually changed are written. The **audio stream itself is never re-encoded or touched**, only the metadata container around it.
+There are **two** exceptions, both explicit, deliberate actions that never happen automatically:
 
-If you want the guarantee that nothing can ever be written, simply don't use the tag panel's Save button — every other feature is read-only.
+- The tag panel's **Save** button writes the tags (and cover art) you edited back into the selected files — only the fields you actually changed are written, and the **audio stream itself is never re-encoded or touched**, only the metadata container around it.
+- Renaming a file from the results table (click twice on its name, see [above](#1-authenticity-detections-lossless-audio-checker-model)) changes its name on disk — again, only its name: the audio and its tags are untouched.
+
+If you want the guarantee that nothing can ever be written, simply don't use the tag panel's Save button and don't rename any file — every other feature is read-only.
 
 ### Network use & privacy
 

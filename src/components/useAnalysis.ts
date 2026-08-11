@@ -215,6 +215,26 @@ export function useAnalysis({ onToast, onFilesChanged }: UseAnalysisArgs) {
 
   const removeFile = useCallback((path: string) => removeFiles([path]), [removeFiles]);
 
+  /// Reflects a successful on-disk rename in the file list: the row at
+  /// `oldPath` becomes `newPath`/`newFileName`, in the exact same spot in
+  /// `displayOrder` — nothing else about the row changes, since renaming
+  /// doesn't touch the audio or its tags. Goes through `applyReport` (rather
+  /// than a hand-rolled `setReport`/`setDisplayOrder` pair) so
+  /// `onFilesChanged` fires with the new path already in `present`, which is
+  /// what lets `App.tsx` migrate the selection to `newPath` in the same tick
+  /// instead of it briefly reading as pruned.
+  const renameFile = useCallback(
+    (oldPath: string, newPath: string, newFileName: string) => {
+      if (!report) return;
+      const files = report.files.map((f) =>
+        f.path === oldPath ? { ...f, path: newPath, file_name: newFileName } : f,
+      );
+      const order = displayOrder.map((p) => (p === oldPath ? newPath : p));
+      applyReport({ ...report, files }, targets, order);
+    },
+    [report, displayOrder, targets, applyReport],
+  );
+
   return {
     report,
     targets,
@@ -232,6 +252,7 @@ export function useAnalysis({ onToast, onFilesChanged }: UseAnalysisArgs) {
     generateSpectrograms,
     cancelTask,
     removeFile,
+    renameFile,
     removeFiles,
     reset,
   };

@@ -31,6 +31,7 @@ import {
   useSelection,
   type SelectionModifiers,
 } from "./components/useSelection";
+import { useRenameFile } from "./components/useRenameFile";
 import { useRenumberTracks } from "./components/useRenumberTracks";
 import { useTagCache, useTagPrefetch } from "./components/useTagCache";
 import { useToast } from "./components/useToast";
@@ -43,6 +44,10 @@ export function App() {
   const [playlistModalOpen, setPlaylistModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [renumberConfirmOpen, setRenumberConfirmOpen] = useState(false);
+  // Which row's name is currently an editable field — the results table's
+  // "click twice on the name" rename. `null` for every row rendering its
+  // plain name cell as usual.
+  const [editingPath, setEditingPath] = useState<string | null>(null);
 
   const cache = useTagCache();
   const { clear: clearCache, invalidate } = cache;
@@ -136,6 +141,22 @@ export function App() {
     }
     run();
   }, [selection]);
+  // Opening the rename field doesn't change the selection, but it does mean
+  // the row's identity (its path) is about to change under the tag panel —
+  // same discard risk as actually reselecting, so it goes through the same
+  // guard.
+  const guardedStartRename = useCallback(
+    (path: string) => {
+      const run = () => setEditingPath(path);
+      if (tagPanelRef.current?.isDirty()) {
+        setPendingAction(() => run);
+        return;
+      }
+      run();
+    },
+    [],
+  );
+  const cancelRename = useCallback(() => setEditingPath(null), []);
   const confirmPendingAction = useCallback(() => {
     if (pendingAction) {
       tagPanelRef.current?.discardEdits();
@@ -329,6 +350,33 @@ export function App() {
     void renumberTracks.renumber(orderedSelectedPaths);
   }, [renumberTracks, orderedSelectedPaths]);
 
+  // Everything that has to follow a file's identity changing: the row itself
+  // (path + file_name, via `analysis.renameFile`), the selection (so the tag
+  // panel stays open on the same file rather than reading as deselected —
+  // see `replacePath`'s doc comment), and the tag cache, which has nothing
+  // filed under the new path yet. Order doesn't matter for correctness here
+  // (React 19 batches all three into one re-render), only that all three
+  // happen together.
+  const { rename: commitRename, busy: renameBusy } = useRenameFile({
+    onRenamed: (oldPath, newPath, newFileName) => {
+      analysis.renameFile(oldPath, newPath, newFileName);
+      selection.replacePath(oldPath, newPath);
+      invalidate([newPath]);
+      setEditingPath(null);
+    },
+    onToast: showToast,
+  });
+  const submitRename = useCallback(
+    (path: string, newStem: string) => {
+      // A rename mid-playback would leave `nowPlaying` pointing at a path
+      // that no longer exists — sidestepped by just stopping first, the same
+      // way deleting the currently-playing row already does.
+      playback.stopIfPlaying(path);
+      void commitRename(path, newStem);
+    },
+    [playback, commitRename],
+  );
+
   return (
     <div id="app">
       <TopBar
@@ -385,7 +433,12 @@ export function App() {
                   nowPlaying={playback.nowPlaying}
                   selectedPaths={selection.selectedPaths}
                   visiblePaths={visiblePaths}
+                  editingPath={editingPath}
+                  renameBusy={renameBusy}
                   onSelectRow={guardedSelectRow}
+                  onStartRename={guardedStartRename}
+                  onCancelRename={cancelRename}
+                  onSubmitRename={submitRename}
                   onReorder={analysis.setDisplayOrder}
                   onReveal={(p) =>
                     api

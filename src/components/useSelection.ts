@@ -63,5 +63,22 @@ export function useSelection(orderedPaths: string[]) {
     setAnchor((a) => (a && present.has(a) ? a : null));
   }, []);
 
-  return { selectedPaths, selectRow, selectAll, clearSelection, pruneSelection };
+  /// A renamed file's identity changes mid-selection — without this, the
+  /// pruning above (run right after, once the file list catches up) would
+  /// just drop `oldPath` as "no longer present" instead of following it to
+  /// `newPath`, silently closing the tag panel on the file the user was
+  /// looking at the moment they renamed it.
+  const replacePath = useCallback((oldPath: string, newPath: string) => {
+    setSelectedPaths((prev) => prev.map((p) => (p === oldPath ? newPath : p)));
+    setAnchor((a) => (a === oldPath ? newPath : a));
+  }, []);
+
+  return {
+    selectedPaths,
+    selectRow,
+    selectAll,
+    clearSelection,
+    pruneSelection,
+    replacePath,
+  };
 }
