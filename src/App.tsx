@@ -86,19 +86,21 @@ export function App() {
   }, [analysis.orderedFiles, hasSearchQuery, searchQuery]);
 
   const selection = useSelection(orderedPaths);
-  const { pruneSelection, clearSelection } = selection;
+  const { pruneSelection } = selection;
   useEffect(() => pruneSelection(presentPaths), [presentPaths, pruneSelection]);
 
-  // A row click that changes the selection wipes any unsaved tag edit — see
-  // `useTagEditor`'s selection-key reset, which runs during render, before
-  // there's any chance to step in afterwards. So the confirmation has to
-  // happen here, *before* `selection.selectRow` runs, not in the tag panel.
-  // A click that doesn't actually change anything (re-clicking the sole
-  // selected row, no modifier keys) is let through unprompted.
-  const [pendingSelection, setPendingSelection] = useState<{
-    path: string;
-    ev: SelectionModifiers;
-  } | null>(null);
+  // A row click, Select all, or Deselect all can each discard an unsaved tag
+  // edit — see `useTagEditor`'s selection-key reset, which runs during
+  // render, before there's any chance to step in afterwards. So the
+  // confirmation has to happen here, *before* the selection actually
+  // changes, not in the tag panel. `pendingAction` holds whatever selection
+  // change is waiting on that confirmation — a plain callback rather than a
+  // `{path, ev}` pair, so the same guard covers all three without any of
+  // them needing a shape it doesn't have. The tag panel's own close button
+  // (`onClose` below) goes through `guardedDeselectAll` too — it used to
+  // clear the selection unconditionally, silently dropping whatever was
+  // half-edited, which was a bug rather than a deliberate exception.
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const guardedSelectRow = useCallback(
     (path: string, ev: SelectionModifiers) => {
       const noopReselect =
@@ -107,21 +109,40 @@ export function App() {
         !ev.ctrlKey &&
         selection.selectedPaths.length === 1 &&
         selection.selectedPaths[0] === path;
+      const run = () => selection.selectRow(path, ev);
       if (!noopReselect && tagPanelRef.current?.isDirty()) {
-        setPendingSelection({ path, ev });
+        setPendingAction(() => run);
         return;
       }
-      selection.selectRow(path, ev);
+      run();
     },
     [selection],
   );
-  const confirmPendingSelection = useCallback(() => {
-    if (pendingSelection) {
-      tagPanelRef.current?.discardEdits();
-      selection.selectRow(pendingSelection.path, pendingSelection.ev);
+  const guardedSelectAll = useCallback(() => {
+    if (orderedPaths.length === 0) return;
+    const run = () => selection.selectAll();
+    if (tagPanelRef.current?.isDirty()) {
+      setPendingAction(() => run);
+      return;
     }
-    setPendingSelection(null);
-  }, [pendingSelection, selection]);
+    run();
+  }, [selection, orderedPaths]);
+  const guardedDeselectAll = useCallback(() => {
+    if (selection.selectedPaths.length === 0) return;
+    const run = () => selection.clearSelection();
+    if (tagPanelRef.current?.isDirty()) {
+      setPendingAction(() => run);
+      return;
+    }
+    run();
+  }, [selection]);
+  const confirmPendingAction = useCallback(() => {
+    if (pendingAction) {
+      tagPanelRef.current?.discardEdits();
+      pendingAction();
+    }
+    setPendingAction(null);
+  }, [pendingAction]);
 
   const playback = usePlayback(orderedPaths, showToast);
   useTagPrefetch(orderedPaths, cache.fetchMissing);
@@ -233,6 +254,43 @@ export function App() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selection.selectedPaths, deleteSelected]);
 
+  // Ctrl/Cmd+A selects every track; Ctrl/Cmd+Shift+A — there's no single
+  // conventional shortcut for "deselect all", but Shift reversing a
+  // shortcut's meaning is a common enough pattern (undo/redo, browsers'
+  // reopen-tab) to read as "the opposite of Select all" rather than an
+  // arbitrary binding. Both go through the same guards as their toolbar
+  // buttons (`guardedSelectAll`/`guardedDeselectAll`), so an unsaved tag
+  // edit gets the same "discard changes?" prompt from the keyboard as it
+  // does from a click.
+  useEffect(() => {
+    const handleKeyDown = (ev: KeyboardEvent) => {
+      if (!ev || !ev.target) return;
+      if (!(ev.metaKey || ev.ctrlKey) || ev.key.toLowerCase() !== "a") return;
+
+      const target = ev.target as HTMLElement;
+      // Ctrl/Cmd+A is also the native "select all text" shortcut — inside a
+      // text field (the search box, a tag field) it must keep doing that,
+      // not hijack the keystroke to select every row instead.
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return;
+
+      // Same reasoning as the Delete/Backspace handler above: a modal open
+      // on screen (including this app's own "Discard changes?" prompt)
+      // should not have the table underneath it react to the keystroke.
+      if (document.querySelector(".cover-modal")) return;
+
+      ev.preventDefault();
+      if (ev.shiftKey) guardedDeselectAll();
+      else guardedSelectAll();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [guardedSelectAll, guardedDeselectAll]);
+
   const onPlaylistConfirm = useCallback(
     (format: PlaylistFormat) => {
       setPlaylistModalOpen(false);
@@ -281,6 +339,8 @@ export function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         selectedCount={selection.selectedPaths.length}
+        onSelectAll={guardedSelectAll}
+        onDeselectAll={guardedDeselectAll}
         renumberBusy={renumberTracks.busy}
         onRenumberTracks={() => setRenumberConfirmOpen(true)}
         onPick={() => void pickFolder()}
@@ -297,7 +357,7 @@ export function App() {
             selectedPaths={selection.selectedPaths}
             tagSets={selectedTagSets}
             coverDragOver={drop.overCover}
-            onClose={clearSelection}
+            onClose={guardedDeselectAll}
             onSaved={invalidate}
             onToast={showToast}
           />
@@ -358,13 +418,13 @@ export function App() {
       />
 
       <ConfirmDialog
-        open={pendingSelection != null}
+        open={pendingAction != null}
         title="Discard changes?"
         message="This track has unsaved tag changes. Selecting another one will discard them."
         confirmLabel="Discard"
         danger
-        onConfirm={confirmPendingSelection}
-        onCancel={() => setPendingSelection(null)}
+        onConfirm={confirmPendingAction}
+        onCancel={() => setPendingAction(null)}
       />
 
       <ConfirmDialog

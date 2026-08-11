@@ -85,16 +85,27 @@
   opacity: 1;
 }
 
-/* Deliberately bigger than the standard 20×20 .icon-btn box (see
-   IconButton.css's comment on why that box is normally fixed everywhere):
-   this button stands alone next to .topbar-search rather than repeating down
-   a list, and it needs the extra room for ListOrdered's small "1 2 3"
-   glyphs to actually read as numbers. Height/width matches .topbar-search
-   input's own rendered box (13px text + 7px vertical padding + 1px border
-   each side), so the two look like a matched pair rather than one being an
-   odd size out. --radius-md, not -sm, for the same reason .btn/inputs use it:
-   this is a clickable control, not a small in-row icon. */
-.topbar-renumber {
+/* Select all / Deselect all: a tight pair, same gap as other grouped icon
+   clusters in the app (see .tag-cover-controls) rather than the wider gap
+   `.topbar` uses between its own unrelated children. */
+.topbar-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Shared by every standalone icon button in the top bar (select all,
+   deselect all, renumber) — deliberately bigger than the standard 20×20
+   .icon-btn box (see IconButton.css's comment on why that box is normally
+   fixed everywhere): each of these stands alone in this row rather than
+   repeating down a list, and ListOrdered in particular needs the extra room
+   for its small "1 2 3" glyphs to actually read as numbers. Height/width
+   matches .topbar-search input's own rendered box (13px text + 7px vertical
+   padding + 1px border each side), so the whole row reads as one matched
+   toolbar rather than one button being an odd size out. --radius-md, not
+   -sm, for the same reason .btn/inputs use it: these are clickable controls,
+   not small in-row icons. */
+.topbar-toolbtn {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-md);

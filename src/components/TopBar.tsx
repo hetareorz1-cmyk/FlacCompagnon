@@ -2,7 +2,7 @@
 // what's enabled is decided by the app state passed in.
 
 import { useRef } from "react";
-import { ListOrdered, Search, X } from "lucide-react";
+import { CheckSquare, ListOrdered, Search, Square, X } from "lucide-react";
 
 import { IconButton } from "./IconButton";
 import { useTheme } from "./useTheme";
@@ -25,6 +25,13 @@ export interface TopBarProps {
   /// Size of the current selection — the renumber button only makes sense
   /// (and only enables) once there are at least two tracks to order.
   selectedCount: number;
+  /// Selecting or deselecting everything can discard an unsaved tag edit the
+  /// same way clicking a different row does, so App.tsx routes both through
+  /// the same confirmation guard rather than calling the selection hook
+  /// directly — the tag panel's own close button goes through the same
+  /// guard as `onDeselectAll` too.
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
   renumberBusy: boolean;
   /// Opens the confirmation dialog; the actual write happens after the user
   /// confirms (see App.tsx) since it overwrites Track/Track Total tags.
@@ -44,6 +51,8 @@ export function TopBar({
   searchQuery,
   onSearchChange,
   selectedCount,
+  onSelectAll,
+  onDeselectAll,
   renumberBusy,
   onRenumberTracks,
   onPick,
@@ -87,10 +96,27 @@ export function TopBar({
         )}
       </div>
       {/* Sized to match .topbar-search's height rather than the standard
-          20×20 .icon-btn box (see .topbar-renumber in TopBar.css) — at that
-          size ListOrdered's "1 2 3" glyphs read as noise, not numbers. It
-          sits right next to the search field it pairs with, so the bigger
-          box reads as intentional rather than inconsistent. */}
+          20×20 .icon-btn box (see .topbar-toolbtn in TopBar.css) — the same
+          fix the renumber button below already needed: ListOrdered's small
+          "1 2 3" glyphs read as noise at the standard size, and once one
+          button in this row was bumped up, leaving these two at the smaller
+          size would look like an oversight rather than a choice. */}
+      <div className="topbar-selection-actions">
+        <IconButton
+          icon={<CheckSquare size={17} strokeWidth={1.7} />}
+          title="Select all tracks"
+          className="topbar-toolbtn"
+          disabled={busy || !hasReport}
+          onClick={onSelectAll}
+        />
+        <IconButton
+          icon={<Square size={17} strokeWidth={1.7} />}
+          title="Deselect all"
+          className="topbar-toolbtn"
+          disabled={busy || selectedCount === 0}
+          onClick={onDeselectAll}
+        />
+      </div>
       <IconButton
         icon={<ListOrdered size={20} strokeWidth={1.6} />}
         title={
@@ -98,7 +124,7 @@ export function TopBar({
             ? "Select at least two tracks to renumber"
             : `Renumber ${selectedCount} selected tracks 1–${selectedCount}`
         }
-        className="topbar-renumber"
+        className="topbar-toolbtn"
         disabled={busy || renumberBusy || selectedCount < 2}
         onClick={onRenumberTracks}
       />

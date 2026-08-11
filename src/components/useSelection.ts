@@ -49,11 +49,19 @@ export function useSelection(orderedPaths: string[]) {
     setAnchor(null);
   }, []);
 
+  /// Selects every row currently in `orderedPaths` — the whole list, not just
+  /// whatever the search filter happens to be showing (that filter is
+  /// display-only, see App.tsx's `visiblePaths`, and never reaches this far).
+  const selectAll = useCallback(() => {
+    setSelectedPaths(orderedPaths);
+    setAnchor(orderedPaths.length > 0 ? orderedPaths[orderedPaths.length - 1] : null);
+  }, [orderedPaths]);
+
   /// Drops paths that no longer exist (a deleted row, a fresh analysis).
   const pruneSelection = useCallback((present: Set<string>) => {
     setSelectedPaths((prev) => prev.filter((p) => present.has(p)));
     setAnchor((a) => (a && present.has(a) ? a : null));
   }, []);
 
-  return { selectedPaths, selectRow, clearSelection, pruneSelection };
+  return { selectedPaths, selectRow, selectAll, clearSelection, pruneSelection };
 }
