@@ -138,9 +138,12 @@ struct PlayingTrack {
     /// silently undo the seek.
     position: Arc<Mutex<usize>>,
     /// The rate `position` is measured against — the file's own rate on the
-    /// streaming path, the device's on the resampling fallback.
+    /// streaming path, the device's on the resampling fallback. (Only the
+    /// rate is needed here: `Cmd::Seek` converts seconds to *frames*, and the
+    /// frames-to-flat-sample-index step that actually needs the channel
+    /// count happens inside the output callback itself, from its own local
+    /// `channels` — see `try_build_stream`.)
     rate: u32,
-    channels: usize,
 }
 
 /// Start the dedicated audio thread. Called once from Tauri's `setup` hook;
@@ -211,7 +214,6 @@ fn audio_thread(rx: mpsc::Receiver<Cmd>, app: AppHandle) {
                                 cancel_decode: built.cancel_decode,
                                 position: built.position,
                                 rate: built.rate,
-                                channels: built.channels,
                             });
                             let _ = reply.send(Ok(()));
                         }
@@ -380,14 +382,13 @@ fn spawn_decode_thread(mut decoder: flaccompagnon_core::decode::PcmStreamDecoder
 /// `build_stream` call: the open output stream itself, the flag that tells
 /// its background decode thread (if any) to give up early, the shared
 /// playback position (frames — read and advanced by the output callback,
-/// overwritten by a `Cmd::Seek`), and the rate/channel count that position is
-/// measured against.
+/// overwritten by a `Cmd::Seek`), and the rate that position is measured
+/// against.
 struct BuiltStream {
     stream: cpal::Stream,
     cancel_decode: Arc<AtomicBool>,
     position: Arc<Mutex<usize>>,
     rate: u32,
-    channels: usize,
 }
 
 fn build_stream(path: &Path, app: AppHandle, request_id: u64) -> Result<BuiltStream, String> {
@@ -448,7 +449,6 @@ fn build_stream(path: &Path, app: AppHandle, request_id: u64) -> Result<BuiltStr
             cancel_decode: cancel,
             position,
             rate: native_rate,
-            channels: native_channels,
         });
     }
 
@@ -489,7 +489,6 @@ fn build_stream(path: &Path, app: AppHandle, request_id: u64) -> Result<BuiltStr
         cancel_decode: fallback_cancel,
         position,
         rate: out_rate,
-        channels: out_channels,
     })
 }
 

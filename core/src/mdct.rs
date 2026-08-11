@@ -66,13 +66,15 @@ impl Mdct {
         let len = 2 * self.n;
         debug_assert_eq!(frame.len(), len);
         debug_assert_eq!(out.len(), self.n);
-        for k in 0..self.n {
+        for (k, out_k) in out.iter_mut().enumerate() {
             let base = k * len;
-            let mut acc = 0.0f32;
-            for t in 0..len {
-                acc += frame[t] * self.window[t] * self.cos[base + t];
-            }
-            out[k] = acc;
+            let cos_row = &self.cos[base..base + len];
+            *out_k = frame
+                .iter()
+                .zip(&self.window)
+                .zip(cos_row)
+                .map(|((f, w), c)| f * w * c)
+                .sum();
         }
     }
 }

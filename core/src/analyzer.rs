@@ -299,7 +299,7 @@ impl StreamAnalyzer {
             self.mdct_hop += 1;
             if self.mdct_have_prev
                 && self.mdct_frames < MDCT_MAX_FRAMES
-                && self.mdct_hop % MDCT_STRIDE == 0
+                && self.mdct_hop.is_multiple_of(MDCT_STRIDE)
             {
                 self.process_mdct();
             }

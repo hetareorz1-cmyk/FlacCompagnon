@@ -79,7 +79,7 @@ pub fn pcm_source_check(
             continue;
         }
         let drop = lo - hi;
-        if drop >= PCM_CLIFF_DB && best.map_or(true, |b| drop > b.drop_db) {
+        if drop >= PCM_CLIFF_DB && best.is_none_or(|b| drop > b.drop_db) {
             best = Some(PcmSourceCheck {
                 boundary_hz: boundary,
                 drop_db: drop,

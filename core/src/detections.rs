@@ -142,9 +142,7 @@ pub fn classify(
         TranscodeState::Detected
     } else if upsampling {
         TranscodeState::None
-    } else if sample_rate <= HIRES_RATE && mdct_dead {
-        TranscodeState::Detected
-    } else if sample_rate <= HIRES_RATE && brick {
+    } else if sample_rate <= HIRES_RATE && (mdct_dead || brick) {
         TranscodeState::Detected
     } else if ratio < CLEAN_RATIO {
         TranscodeState::Suspected

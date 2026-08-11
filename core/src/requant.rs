@@ -284,7 +284,13 @@ fn ymin_hit(y: &[f64]) -> bool {
         return false;
     }
     let ymin = y.iter().cloned().fold(f64::INFINITY, f64::min);
-    if !(ymin > 0.0) {
+    // Written out as `is_nan() || <= 0.0` rather than the equivalent
+    // `!(ymin > 0.0)` — the negated form is exactly as correct (`f64::min`
+    // only ever produces NaN if every value in `y` was NaN), but clippy's
+    // `neg_cmp_op_on_partial_ord` is right that spelling out the NaN case
+    // makes the intent legible without having to reason about De Morgan's
+    // laws over a partial order.
+    if ymin.is_nan() || ymin <= 0.0 {
         return false;
     }
     let mut best = 1.0f64;
@@ -504,12 +510,12 @@ pub fn analyze_segment(left: &[f64], right: Option<&[f64]>) -> Option<RequantRes
         // frames are coded short and are invisible to the long analysis).
         let mut per_onset = vec![0.0f64; N];
         for &m in &COARSE_FRAMES {
-            for onset in 0..N {
+            for (onset, best_l) in per_onset.iter_mut().enumerate() {
                 let start = onset + m * N;
                 let l = frame_likelihood(&mdct, win, &chans, start, &mut coefs, &mut ybuf)
                     .max(short_frame_likelihood(&mdct_s, win_s, &chans, start, &mut coefs_s, &mut ybuf));
-                if l > per_onset[onset] {
-                    per_onset[onset] = l;
+                if l > *best_l {
+                    *best_l = l;
                 }
             }
         }
@@ -536,7 +542,7 @@ pub fn analyze_segment(left: &[f64], right: Option<&[f64]>) -> Option<RequantRes
             }
             scores.sort_by(|a, b| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
             let rate = scores[2] as f32;
-            if best.map_or(true, |b| rate > b.rate) {
+            if best.is_none_or(|b| rate > b.rate) {
                 best = Some(RequantResult {
                     rate,
                     onset,
