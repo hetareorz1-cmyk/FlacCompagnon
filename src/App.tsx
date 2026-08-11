@@ -170,6 +170,15 @@ export function App() {
     }
     run();
   }, [selection]);
+  const guardedInvertSelection = useCallback(() => {
+    if (orderedPaths.length === 0) return;
+    const run = () => selection.invertSelection();
+    if (tagPanelRef.current?.isDirty()) {
+      setPendingAction(() => run);
+      return;
+    }
+    run();
+  }, [selection, orderedPaths]);
   // Opening the rename field doesn't change the selection, but it does mean
   // the row's identity (its path) is about to change under the tag panel —
   // same discard risk as actually reselecting, so it goes through the same
@@ -443,6 +452,7 @@ export function App() {
         selectedCount={selection.selectedPaths.length}
         onSelectAll={guardedSelectAll}
         onDeselectAll={guardedDeselectAll}
+        onInvertSelection={guardedInvertSelection}
         renumberBusy={renumberTracks.busy}
         onRenumberTracks={() => setRenumberConfirmOpen(true)}
         onPick={() => void pickFolder()}

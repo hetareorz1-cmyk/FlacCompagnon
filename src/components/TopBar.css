@@ -85,10 +85,10 @@
   opacity: 1;
 }
 
-/* Select all / Deselect all: one bordered pill with a divider between them,
-   same grouped-pair look as the extended-tags pop-in's +/− buttons
-   (`.ext-plusminus`, ExtendedTagsModal.css) rather than two independent
-   buttons that happen to sit close together. */
+/* Select all / Deselect all / Invert selection: one bordered pill with a
+   divider between each, same grouped look as the extended-tags pop-in's
+   +/− buttons (`.ext-plusminus`, ExtendedTagsModal.css) rather than
+   independent buttons that happen to sit close together. */
 .topbar-selection-actions {
   display: flex;
   align-items: stretch;
@@ -106,8 +106,13 @@
   height: 30px;
   border-radius: 0;
 }
-.topbar-selection-actions .topbar-toolbtn:first-child {
+/* A divider after every button except the last — not `:first-child` alone —
+   so this scales to any number of grouped buttons instead of only ever
+   drawing one divider for a fixed pair. */
+.topbar-selection-actions .topbar-toolbtn:not(:last-child) {
   border-right: 1px solid var(--border);
+}
+.topbar-selection-actions .topbar-toolbtn:first-child {
   border-top-left-radius: var(--radius-md);
   border-bottom-left-radius: var(--radius-md);
 }

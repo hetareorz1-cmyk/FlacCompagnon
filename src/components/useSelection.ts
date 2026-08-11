@@ -57,6 +57,17 @@ export function useSelection(orderedPaths: string[]) {
     setAnchor(orderedPaths.length > 0 ? orderedPaths[orderedPaths.length - 1] : null);
   }, [orderedPaths]);
 
+  /// Selects everything currently unselected and drops everything currently
+  /// selected — same "whole list, not just the filtered view" scope as
+  /// `selectAll` above, for the same reason (the search filter is
+  /// display-only).
+  const invertSelection = useCallback(() => {
+    const selected = new Set(selectedPaths);
+    const next = orderedPaths.filter((p) => !selected.has(p));
+    setSelectedPaths(next);
+    setAnchor(next.length > 0 ? next[next.length - 1] : null);
+  }, [orderedPaths, selectedPaths]);
+
   /// Drops paths that no longer exist (a deleted row, a fresh analysis).
   const pruneSelection = useCallback((present: Set<string>) => {
     setSelectedPaths((prev) => prev.filter((p) => present.has(p)));
@@ -77,6 +88,7 @@ export function useSelection(orderedPaths: string[]) {
     selectedPaths,
     selectRow,
     selectAll,
+    invertSelection,
     clearSelection,
     pruneSelection,
     replacePath,

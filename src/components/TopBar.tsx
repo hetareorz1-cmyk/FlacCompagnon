@@ -2,7 +2,7 @@
 // what's enabled is decided by the app state passed in.
 
 import { useRef } from "react";
-import { CheckSquare, ListMusic, ListOrdered, Search, Square, X } from "lucide-react";
+import { ArrowLeftRight, CheckSquare, ListMusic, ListOrdered, Search, Square, X } from "lucide-react";
 
 import { IconButton } from "./IconButton";
 import { useTheme } from "./useTheme";
@@ -25,13 +25,14 @@ export interface TopBarProps {
   /// Size of the current selection — the renumber button only makes sense
   /// (and only enables) once there are at least two tracks to order.
   selectedCount: number;
-  /// Selecting or deselecting everything can discard an unsaved tag edit the
-  /// same way clicking a different row does, so App.tsx routes both through
-  /// the same confirmation guard rather than calling the selection hook
-  /// directly — the tag panel's own close button goes through the same
+  /// Selecting, deselecting or inverting can each discard an unsaved tag edit
+  /// the same way clicking a different row does, so App.tsx routes all three
+  /// through the same confirmation guard rather than calling the selection
+  /// hook directly — the tag panel's own close button goes through the same
   /// guard as `onDeselectAll` too.
   onSelectAll: () => void;
   onDeselectAll: () => void;
+  onInvertSelection: () => void;
   renumberBusy: boolean;
   /// Opens the confirmation dialog; the actual write happens after the user
   /// confirms (see App.tsx) since it overwrites Track/Track Total tags.
@@ -53,6 +54,7 @@ export function TopBar({
   selectedCount,
   onSelectAll,
   onDeselectAll,
+  onInvertSelection,
   renumberBusy,
   onRenumberTracks,
   onPick,
@@ -115,6 +117,13 @@ export function TopBar({
           className="topbar-toolbtn"
           disabled={busy || selectedCount === 0}
           onClick={onDeselectAll}
+        />
+        <IconButton
+          icon={<ArrowLeftRight size={16} strokeWidth={1.7} />}
+          title="Invert selection"
+          className="topbar-toolbtn"
+          disabled={busy || !hasReport}
+          onClick={onInvertSelection}
         />
       </div>
       <IconButton
