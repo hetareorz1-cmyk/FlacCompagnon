@@ -2,7 +2,7 @@
 // what's enabled is decided by the app state passed in.
 
 import { useRef } from "react";
-import { CheckSquare, ListOrdered, Search, Square, X } from "lucide-react";
+import { CheckSquare, ListMusic, ListOrdered, Search, Square, X } from "lucide-react";
 
 import { IconButton } from "./IconButton";
 import { useTheme } from "./useTheme";
@@ -128,19 +128,19 @@ export function TopBar({
         disabled={busy || renumberBusy || selectedCount < 2}
         onClick={onRenumberTracks}
       />
+      <IconButton
+        icon={<ListMusic size={19} strokeWidth={1.6} />}
+        title="Export playlist…"
+        className="topbar-toolbtn"
+        disabled={busy || !hasReport}
+        onClick={onExportPlaylist}
+      />
       <div className="actions">
         <button className="btn" disabled={busy} onClick={onPick}>
-          Choose folder…
+          Add titles…
         </button>
         <button className="btn btn-secondary" disabled={busy || !hasReport} onClick={onSave}>
           Save…
-        </button>
-        <button
-          className="btn btn-secondary"
-          disabled={busy || !hasReport}
-          onClick={onExportPlaylist}
-        >
-          Export playlist…
         </button>
         <button
           className="btn btn-secondary"

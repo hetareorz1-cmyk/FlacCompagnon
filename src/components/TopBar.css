@@ -85,13 +85,35 @@
   opacity: 1;
 }
 
-/* Select all / Deselect all: a tight pair, same gap as other grouped icon
-   clusters in the app (see .tag-cover-controls) rather than the wider gap
-   `.topbar` uses between its own unrelated children. */
+/* Select all / Deselect all: one bordered pill with a divider between them,
+   same grouped-pair look as the extended-tags pop-in's +/− buttons
+   (`.ext-plusminus`, ExtendedTagsModal.css) rather than two independent
+   buttons that happen to sit close together. */
 .topbar-selection-actions {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  align-items: stretch;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.topbar-selection-actions .topbar-toolbtn {
+  /* .topbar-toolbtn's own 32px is sized to match the search input exactly on
+     its own (see that rule's comment) — wrapped in this pill, the pill's
+     *own* 1px border on top and bottom adds 2px the standalone buttons never
+     had, so the pair reads taller than the field and the other toolbar
+     buttons beside it. Shed those 2px here so pill height (30 + 1 + 1)
+     lands back on the same 32px everything else uses. */
+  height: 30px;
+  border-radius: 0;
+}
+.topbar-selection-actions .topbar-toolbtn:first-child {
+  border-right: 1px solid var(--border);
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+.topbar-selection-actions .topbar-toolbtn:last-child {
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
 }
 
 /* Shared by every standalone icon button in the top bar (select all,
