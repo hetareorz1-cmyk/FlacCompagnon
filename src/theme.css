@@ -146,6 +146,25 @@
   box-sizing: border-box;
 }
 
+/* This is a desktop app, not a web page: an accidental text-selection
+   highlight while clicking a button, dragging a row, or double-clicking a
+   label is HTML-default behaviour with no native-app equivalent, not
+   something a user is doing on purpose. Off everywhere by default, back on
+   only where there's actually text meant to be selected/edited — the free-
+   text `<input>` fields (search, tag fields, inline rename, lookup search).
+   `-webkit-user-select` is required alongside the unprefixed property: Tauri's
+   WKWebView doesn't reliably honor the unprefixed one alone (see
+   ResultsTable.css's row-drag comment, the one place this was already solved
+   locally before this rule made it universal). */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+input {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 html,
 body {
   margin: 0;
