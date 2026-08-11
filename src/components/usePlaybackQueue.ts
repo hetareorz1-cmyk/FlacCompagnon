@@ -5,18 +5,19 @@
 // - No selection: the full table, in display order.
 // - More than one row selected: just the selection, still in display order
 //   (not click order) — so Next/Previous read the same left-to-right order
-//   the eye does.
+//   the eye does, skipping any unselected "hole" in between.
 // - Exactly one row selected: no queue at all. That's a deliberate one-off
 //   preview, not something to step through, so Previous/Next stay disabled.
 //
-// The natural end-of-track auto-advance (`usePlayback`'s own `finished`
-// listener) is a separate concern and always keeps walking the full table
-// regardless of any of this — selecting a few rows to hear next only changes
-// what the *buttons* do, not what happens when a track ends on its own.
+// `effectiveQueue` (playbackQueue.ts) is the single source of truth for this
+// ordering — `usePlayback`'s own natural end-of-track auto-advance uses the
+// exact same function, so a track ending on its own walks the same order
+// these buttons do rather than a different one.
 
 import { useCallback, useMemo } from "react";
 
 import type { NowPlaying } from "./usePlayback";
+import { effectiveQueue } from "./playbackQueue";
 
 export interface UsePlaybackQueueArgs {
   orderedPaths: string[];
@@ -33,14 +34,10 @@ export function usePlaybackQueue({
   play,
   togglePause,
 }: UsePlaybackQueueArgs) {
-  const queue = useMemo<string[] | null>(() => {
-    if (selectedPaths.length === 1) return null;
-    if (selectedPaths.length > 1) {
-      const selected = new Set(selectedPaths);
-      return orderedPaths.filter((p) => selected.has(p));
-    }
-    return orderedPaths;
-  }, [orderedPaths, selectedPaths]);
+  const queue = useMemo(
+    () => effectiveQueue(orderedPaths, selectedPaths),
+    [orderedPaths, selectedPaths],
+  );
 
   const index = queue && nowPlaying ? queue.indexOf(nowPlaying.path) : -1;
   const canGoPrevious = queue != null && index > 0;

@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { PlaybackFinished, PlaybackPosition } from "../types";
 import * as api from "../api";
 import { listen } from "@tauri-apps/api/event";
+import { effectiveQueue } from "./playbackQueue";
 
 export interface NowPlaying {
   path: string;
@@ -23,6 +24,12 @@ export interface NowPlaying {
 
 export function usePlayback(
   orderedPaths: string[],
+  /// The selection follows the same rule the footer's Previous/Next buttons
+  /// use (`effectiveQueue`) — with a selection active, a track ending on its
+  /// own advances within that selection, skipping any unselected row in
+  /// between, and stops once the selection is exhausted rather than spilling
+  /// over into the rest of the table.
+  selectedPaths: string[],
   onToast: (msg: string, kind?: "info" | "error") => void,
 ) {
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
@@ -45,6 +52,8 @@ export function usePlayback(
   const current = useRef<NowPlaying | null>(null);
   const orderRef = useRef(orderedPaths);
   orderRef.current = orderedPaths;
+  const selectedRef = useRef(selectedPaths);
+  selectedRef.current = selectedPaths;
 
   useEffect(() => {
     current.current = nowPlaying;
@@ -154,18 +163,20 @@ export function usePlayback(
     });
   }, [volume, muted]);
 
-  // Auto-advance to the next row in display order when a track ends on its
-  // own; stop at the end of the list. Subscribed once — the handler reads the
-  // current track and order from refs, so re-ordering the table mid-playback
-  // doesn't tear down and rebuild the listener.
+  // Auto-advance to the next row in the effective queue when a track ends on
+  // its own; stop once that queue is exhausted (or was `null` to begin with —
+  // a single-row selection is a one-off preview, not something to advance out
+  // of). Subscribed once — the handler reads the current track, order and
+  // selection from refs, so re-ordering the table or changing the selection
+  // mid-playback doesn't tear down and rebuild the listener.
   useEffect(() => {
     const unlisten = listen<PlaybackFinished>("playback://finished", (e) => {
       const playing = current.current;
       // A stale notification from a track already superseded by a newer play.
       if (!playing || e.payload.request_id !== playing.requestId) return;
-      const order = orderRef.current;
-      const idx = order.indexOf(playing.path);
-      const next = idx === -1 ? undefined : order[idx + 1];
+      const queue = effectiveQueue(orderRef.current, selectedRef.current);
+      const idx = queue?.indexOf(playing.path) ?? -1;
+      const next = idx === -1 ? undefined : queue?.[idx + 1];
       if (next) {
         void play(next);
       } else {

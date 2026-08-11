@@ -207,8 +207,12 @@ export function App() {
   // auto-advance (inside usePlayback) and the footer's transport buttons
   // (usePlaybackQueue, below) should walk the table exactly as it's
   // currently shown — filtered and sorted — not the raw import order. See
-  // `displayedPaths`'s own doc comment above.
-  const playback = usePlayback(displayedPaths, showToast);
+  // `displayedPaths`'s own doc comment above. The selection is passed through
+  // too, so auto-advance follows it the same way the buttons do (see
+  // `effectiveQueue` in playbackQueue.ts) — with a selection active, a track
+  // ending on its own skips any unselected row and stops once the selection
+  // runs out, rather than spilling into the rest of the table.
+  const playback = usePlayback(displayedPaths, selection.selectedPaths, showToast);
   useTagPrefetch(orderedPaths, cache.fetchMissing);
 
   // What the footer's transport buttons operate over — see the hook's own

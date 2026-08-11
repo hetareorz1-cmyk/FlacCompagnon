@@ -78,7 +78,7 @@ Selecting rows opens a **tag panel** on the left — the one place in the app th
 - **Batch editing**: select several tracks and every field shows either the shared value or a **“multiple values”** badge. Only the fields you actually touch are written — the others are left exactly as they are on each file, so editing the album of 12 tracks never flattens their differing titles.
 - **Renumbering**: select two or more tracks and click the renumber icon next to the search field to set Track to 1–N and Track Total to N across the selection, in the order shown in the table (not the order you clicked them in) — a confirmation dialog spells out exactly what will change before anything is written.
 - **Cover art**, shown edge-to-edge at its own aspect ratio with a banner below carrying its dimensions/format/size and a **role picker** (_Front cover_, _Back cover_, _Artist_, …) — pick a different role to relabel the artwork without touching the image itself. When the selection holds several different covers, chevrons (and a 3 s auto-advance) cycle through them and the role picker is disabled (relabeling only makes sense when every selected file shares the exact same image). **Drop an image file onto the artwork** to replace the cover — as _Front cover_ — on every selected track. The extract button writes every distinct cover in the selection next to the audio as a plain image file — `cover.<ext>` for the first, `cover-2.<ext>`, `cover-3.<ext>`, … for the rest, so a selection with several genuinely different covers gets all of them instead of one overwriting the last.
-- **Extended tags**: a read-only viewer for everything else present in the file (ISRC, BPM, ReplayGain, custom frames, …), merged across the selection with the same “multiple values” handling.
+- **Extended tags**: everything else present in the file (ISRC, BPM, ReplayGain, label, …) opens in its own pop-in, merged across the selection with the same "multiple values" handling. Click a row twice to edit its value; a grouped +/− adds a tag from a curated list of common fields for the file's format (lofty, the tagging library, can only write a known tag key, not an arbitrary custom one) or removes the selected row. Nothing is written until you press the pop-in's own **OK**, which only stages the change into the panel — the outer **Save** is still the one thing that ever reaches disk.
 - **Search online** looks the release up on **MusicBrainz** and, optionally, **Discogs**, and pre-fills the panel from the result — see below.
 
 Nothing is written until you press **Save**; **Reset** discards every pending change and re-reads the files.
@@ -99,12 +99,18 @@ Results from both sources are listed with a source badge. Picking one shows its 
 
 ### 7. Playlist export (M3U)
 
-Click **Export playlist…** to write the current list to an M3U playlist, **in the order shown on screen** — including any manual reordering you did by dragging rows, and excluding rows you deleted with the trash icon. Two formats are offered, Extended by default:
+Click the export-playlist icon next to the renumber icon (or use the **Export** menu) to write the current list to an M3U playlist, **in the order shown on screen** — including any manual reordering you did by dragging rows, and excluding rows you deleted with the trash icon. Two formats are offered, Extended by default:
 
 - **Extended M3U** (`.m3u8`) — adds an `#EXTINF` line per track carrying its duration and `Artist - Title` (from the tags, falling back to the file name), so players show proper names without opening every file.
 - **Simple M3U** (`.m3u`) — the paths only; understood by essentially everything.
 
 Paths are written **absolute**, so the playlist plays from anywhere on the machine, but it will break if you later move the audio files.
+
+### 8. Playback
+
+Click the play icon on any row to preview it — no tag panel or selection required. A footer bar carries the transport: **Previous / Play-Pause / Next**, a seek bar (click or drag anywhere on the track), and a volume control (the slider stays hidden until you hover it, so it never crowds the seek bar; click the speaker icon to mute, click again to restore full volume).
+
+Previous/Next, and the natural advance once a track finishes on its own, **follow the current selection**: with two or more rows selected, playback stays within that selection — skipping any unselected row in between — and stops once the selection is exhausted rather than spilling into the rest of the table. With no selection, or exactly one row selected (a deliberate one-off preview), it walks the full table as shown, filtered and sorted.
 
 ---
 
@@ -221,7 +227,7 @@ Everything is pure Rust; there is no system library to install beyond Tauri's ow
 | --- | --- |
 | [`symphonia`](https://crates.io/crates/symphonia) / [`claxon`](https://crates.io/crates/claxon) | Audio decoding; `claxon` also drives the fused FLAC + MD5 pass. |
 | [`lofty`](https://crates.io/crates/lofty) | Reading and writing tags and cover art across every supported container. |
-| [`cpal`](https://crates.io/crates/cpal) | Audio output for the table's hover-to-preview playback. |
+| [`cpal`](https://crates.io/crates/cpal) | Audio output for in-app playback (footer transport, click-to-preview from the table). |
 | [`reqwest`](https://crates.io/crates/reqwest) | The online tag lookup — the only crate here that touches the network. Uses **rustls**, so no system OpenSSL is required. |
 | [`base64`](https://crates.io/crates/base64) | Moving cover-art bytes between the Rust core and the webview. |
 
@@ -363,7 +369,7 @@ Requests carry a descriptive `User-Agent` (as MusicBrainz's usage policy require
 - Effective bit-depth reconstruction is exact for ≤ 24-bit integer sources.
 - FLAC files are decoded **once**: a fused pass feeds the analysis and hashes the MD5 from the same raw integer samples (bit-identical to `flac -t`), so MD5 verification adds only a negligible hashing cost on top of the analysis.
 - Files are analyzed **in parallel**: a worker pool sized to the machine (one worker per CPU core, minus one to keep the UI responsive) processes independent files concurrently, so analyzing an album scales with your core count.
-- **Extended tags are read-only.** They are displayed and merged across a selection, but not editable: writing them back would mean translating raw per-format tag keys into the tagging library's own key type, which is easy to get subtly wrong on a real music library.
+- **Extended tags only offer a curated list of fields to add**, not a free-text custom key. lofty (the tagging library) can only write one of its own known tag keys, not an arbitrary made-up frame the way some tools' TXXX editors can, so a free-text field would silently do nothing for a name it doesn't recognize.
 - **The online lookup matches by text, not by audio.** It uses an existing MusicBrainz ID when the files carry one, otherwise the tags, otherwise a guess from the file name. It does **not** fingerprint the audio, so a badly-named, untagged file may need the query typed by hand.
 - **Playlists store absolute paths**, so they survive being opened from anywhere on the machine but break if the audio files are moved afterwards.
 
@@ -371,7 +377,7 @@ Requests carry a descriptive `User-Agent` (as MusicBrainz's usage policy require
 
 Easy future additions (the analyzer is modular): per-channel spectral analysis, ReplayGain scanning, and reporting **intensity-stereo damage** as a quality indicator. Note that the transcode detector is already *robust to* joint-stereo coding — it tests the L, R, M and S representations, so an M/S-coded (or intensity-stereo) transcode is still caught. What is missing is the separate measurement of the harm that coding leaves behind: a Side channel that collapses above the intensity cutoff, and the stereo image narrowing with it.
 
-On the tagging side: making the extended tags editable, and **AcoustID/Chromaprint audio fingerprinting** so a track can be identified from its sound rather than its metadata — the way MusicBrainz Picard does. Fingerprinting needs an extra native dependency and an AcoustID API key, so it is deliberately out of scope for now.
+On the tagging side: **AcoustID/Chromaprint audio fingerprinting** so a track can be identified from its sound rather than its metadata — the way MusicBrainz Picard does. Fingerprinting needs an extra native dependency and an AcoustID API key, so it is deliberately out of scope for now.
 
 ## References
 
