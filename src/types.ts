@@ -151,6 +151,17 @@ export interface TagEdits {
   // `null` leaves the compilation flag untouched.
   compilation: boolean | null;
   cover: CoverEdit;
+  // Sparse add/edit/remove instructions for extended tags, keyed by the same
+  // raw format-specific tag name `TagSet.extra` pairs use — see Rust's
+  // `TagEdits::extra` doc comment.
+  extra: [string, FieldEdit][];
+}
+
+// One entry in the extended-tags pop-in's "+" picker — mirrors Rust's
+// `core::tags::AddableTag`.
+export interface AddableTag {
+  key: string;
+  label: string;
 }
 
 export interface TagWriteSummary {

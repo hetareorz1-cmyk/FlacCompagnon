@@ -2,6 +2,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  AddableTag,
   CoverArt,
   FolderReport,
   LookupCandidate,
@@ -81,6 +82,12 @@ export const readCoverImage = (path: string) =>
 // Returns the path actually written.
 export const extractCoverArt = (dir: string, mime: string, dataBase64: string, index: number) =>
   invoke<string>("extract_cover_art", { dir, mime, dataBase64, index });
+
+// The extended-tags pop-in's "+" picker: common tags this one representative
+// file's format can actually take, curated on the Rust side (lofty has no
+// full-enumeration API to derive this from).
+export const listAddableTags = (path: string) =>
+  invoke<AddableTag[]>("list_addable_tags", { path });
 
 // Playback: single-track preview. `playTrack` returns a request id used to
 // match the `playback://finished` event to the track that was actually

@@ -3,7 +3,7 @@
 // value per field plus a "they disagree" flag, which is the whole model the
 // panel is built on.
 
-import type { CoverArt, TagSet } from "../types";
+import type { CoverArt, FieldEdit, TagSet } from "../types";
 import type { TagFieldValue } from "./TagField";
 import { TAG_TEXT_FIELDS, type TagTextField } from "./tagLayout";
 
@@ -64,6 +64,29 @@ export function extendedRows(tagSets: TagSet[]): ExtendedRow[] {
   }
   rows.sort((a, b) => a.key.localeCompare(b.key));
   return rows;
+}
+
+/// Overlays a sparse `{ key: FieldEdit }` draft onto the selection's base
+/// extended rows — what the extended-tags pop-in shows while edits are
+/// staged but not yet pushed up to the panel's own buffer. `Clear` drops the
+/// row, `Set` upserts one with `mixed: false` (an edit resolves any
+/// disagreement by definition), `Unset` shouldn't appear in a sparse map but
+/// is a no-op if it does, same as everywhere else `FieldEdit` is read.
+export function applyExtraEdits(rows: ExtendedRow[], edits: Record<string, FieldEdit>): ExtendedRow[] {
+  const out = rows
+    .filter((r) => edits[r.key] !== "Clear")
+    .map((r) => {
+      const edit = edits[r.key];
+      return edit && edit !== "Unset" && edit !== "Clear"
+        ? { key: r.key, value: edit.Set, mixed: false }
+        : r;
+    });
+  for (const [key, edit] of Object.entries(edits)) {
+    if (edit === "Unset" || edit === "Clear") continue;
+    if (!out.some((r) => r.key === key)) out.push({ key, value: edit.Set, mixed: false });
+  }
+  out.sort((a, b) => a.key.localeCompare(b.key));
+  return out;
 }
 
 /// A MusicBrainz Release ID every tagged file agrees on (the normal case for a

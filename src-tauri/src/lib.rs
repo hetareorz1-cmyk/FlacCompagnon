@@ -58,6 +58,7 @@ pub fn run() {
             commands::tags::write_tags_batch,
             commands::tags::read_cover_image,
             commands::tags::extract_cover_art,
+            commands::tags::list_addable_tags,
             commands::lookup::lookup_musicbrainz,
             commands::lookup::lookup_musicbrainz_detail,
             commands::lookup::lookup_discogs,

@@ -10,7 +10,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import type { CoverArt, CoverEdit, TagEdits, TagSet } from "../types";
+import type { CoverArt, CoverEdit, FieldEdit, TagEdits, TagSet } from "../types";
 import * as api from "../api";
 import type { TagFieldValue } from "./TagField";
 import { TAG_TEXT_FIELDS, type TagTextField } from "./tagLayout";
@@ -37,6 +37,7 @@ export function emptyTagEdits(): TagEdits {
     comment: "Unset",
     compilation: null,
     cover: "Unset",
+    extra: [],
   };
 }
 
@@ -52,6 +53,11 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
   const [edits, setEdits] = useState<Partial<Record<TagTextField, string>>>({});
   const [compilationEdit, setCompilationEdit] = useState<boolean | null>(null);
   const [coverEdit, setCoverEdit] = useState<CoverEdit>("Unset");
+  // Sparse, keyed by the same raw format-specific tag name `TagSet.extra`
+  // pairs use — the extended-tags pop-in's own Save merges its local draft
+  // in here rather than writing to disk itself (see ExtendedTagsModal's file
+  // header comment), so this buffer is what actually reaches Save/Reset.
+  const [extraEdits, setExtraEditsState] = useState<Record<string, FieldEdit>>({});
   const [saving, setSaving] = useState(false);
 
   // Selecting different files discards whatever was half-typed for the
@@ -65,6 +71,7 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
     setEdits({});
     setCompilationEdit(null);
     setCoverEdit("Unset");
+    setExtraEditsState({});
   }
 
   const base = useMemo(() => fieldValues(tagSets), [tagSets]);
@@ -84,7 +91,10 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
   const compilation = compilationEdit ?? baseCompilation;
 
   const dirty =
-    Object.keys(edits).length > 0 || compilationEdit !== null || coverEdit !== "Unset";
+    Object.keys(edits).length > 0 ||
+    compilationEdit !== null ||
+    coverEdit !== "Unset" ||
+    Object.keys(extraEdits).length > 0;
 
   const setField = useCallback((field: TagTextField, value: string) => {
     setEdits((prev) => ({ ...prev, [field]: value }));
@@ -124,10 +134,19 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
     });
   }, []);
 
+  /// Merges the extended-tags pop-in's local draft into this buffer on its
+  /// own Save — the pop-in never writes to disk itself, only stages into the
+  /// same buffer the panel's own Save/Reset already govern (see
+  /// ExtendedTagsModal's file header comment for why).
+  const mergeExtraEdits = useCallback((patch: Record<string, FieldEdit>) => {
+    setExtraEditsState((prev) => ({ ...prev, ...patch }));
+  }, []);
+
   const reset = useCallback(() => {
     setEdits({});
     setCompilationEdit(null);
     setCoverEdit("Unset");
+    setExtraEditsState({});
   }, []);
 
   const buildEdits = useCallback((): TagEdits => {
@@ -135,6 +154,7 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
       ...emptyTagEdits(),
       compilation: compilationEdit,
       cover: coverEdit,
+      extra: Object.entries(extraEdits),
     };
     for (const field of TAG_TEXT_FIELDS) {
       const edited = edits[field];
@@ -143,7 +163,7 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
       out[field] = trimmed === "" ? "Clear" : { Set: trimmed };
     }
     return out;
-  }, [edits, compilationEdit, coverEdit]);
+  }, [edits, compilationEdit, coverEdit, extraEdits]);
 
   const save = useCallback(async () => {
     if (paths.length === 0 || !dirty || saving) return;
@@ -172,6 +192,7 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
     values,
     compilation,
     coverEdit,
+    extraEdits,
     dirty,
     saving,
     setField,
@@ -180,6 +201,7 @@ export function useTagEditor({ paths, tagSets, onSaved, onToast }: UseTagEditorA
     stageCover,
     clearCover,
     setCoverRole,
+    mergeExtraEdits,
     reset,
     save,
   };

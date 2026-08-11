@@ -22,7 +22,7 @@ import { IconButton } from "./IconButton";
 import { LookupModal } from "./LookupModal";
 import { TagFields } from "./TagFields";
 import type { TagTextField } from "./tagLayout";
-import { commonReleaseId, distinctCovers, extendedRows } from "./tagSelection";
+import { applyExtraEdits, commonReleaseId, distinctCovers, extendedRows } from "./tagSelection";
 import { useTagEditor } from "./useTagEditor";
 
 export interface TagPanelHandle {
@@ -54,6 +54,11 @@ export interface TagPanelProps {
   /// dropped — an empty array with a non-empty selection means "no taggable
   /// file here".
   tagSets: TagSet[];
+  /// Every distinct file format in the selection (e.g. `["FLAC"]`, or
+  /// `["FLAC", "MP3"]` for a mixed one) — passed through to the extended-tags
+  /// pop-in, since extended tags (and what its "+" picker can offer) depend
+  /// on the format.
+  formats: string[];
   coverDragOver: boolean;
   onClose: () => void;
   onSaved: (paths: string[]) => void;
@@ -64,6 +69,7 @@ export interface TagPanelProps {
 export function TagPanel({
   selectedPaths,
   tagSets,
+  formats,
   coverDragOver,
   onClose,
   onSaved,
@@ -87,6 +93,13 @@ export function TagPanel({
 
   const covers = useMemo(() => distinctCovers(tagSets), [tagSets]);
   const extended = useMemo(() => extendedRows(tagSets), [tagSets]);
+  // What the "Extended tags (N)" button's count shows — the base rows with
+  // whatever's already staged in `editor.extraEdits` overlaid, so an add or
+  // remove made in the pop-in is reflected immediately, not just after Save.
+  const effectiveExtended = useMemo(
+    () => applyExtraEdits(extended, editor.extraEdits),
+    [extended, editor.extraEdits],
+  );
   const releaseId = useMemo(() => commonReleaseId(tagSets), [tagSets]);
 
   // A staged cover (or deletion) replaces whatever the files currently have,
@@ -220,7 +233,7 @@ export function TagPanel({
             onFieldChange={editor.setField}
             compilation={editor.compilation}
             onCompilationChange={editor.setCompilation}
-            extendedCount={extended.length}
+            extendedCount={effectiveExtended.length}
             onOpenExtended={() => setExtendedOpen(true)}
             onOpenLookup={() => setLookupOpen(true)}
           />
@@ -265,7 +278,12 @@ export function TagPanel({
       <ExtendedTagsModal
         open={extendedOpen}
         rows={extended}
+        pendingEdits={editor.extraEdits}
+        selectedPaths={selectedPaths}
+        formats={formats}
         onClose={() => setExtendedOpen(false)}
+        onSave={editor.mergeExtraEdits}
+        onToast={onToast}
       />
       <LookupModal
         open={lookupOpen}

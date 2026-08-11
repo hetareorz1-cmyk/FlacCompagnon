@@ -374,6 +374,16 @@ export function App() {
     () => tagSetsFor(selection.selectedPaths),
     [tagSetsFor, selection.selectedPaths],
   );
+  // Every distinct format in the selection, for the extended-tags pop-in's
+  // format indicator — extended tags (and what its "+" picker can offer)
+  // depend on the format, the same reason Mp3tag shows it too.
+  const selectedFormats = useMemo(() => {
+    const paths = new Set(selection.selectedPaths);
+    const formats = new Set(
+      analysis.orderedFiles.filter((f) => paths.has(f.path)).map((f) => f.format),
+    );
+    return [...formats];
+  }, [analysis.orderedFiles, selection.selectedPaths]);
 
   // `selection.selectedPaths` is in click order (see useSelection's doc
   // comment), not display order — renumbering has to follow the table's
@@ -448,6 +458,7 @@ export function App() {
             ref={tagPanelRef}
             selectedPaths={selection.selectedPaths}
             tagSets={selectedTagSets}
+            formats={selectedFormats}
             coverDragOver={drop.overCover}
             onClose={guardedDeselectAll}
             onSaved={invalidate}

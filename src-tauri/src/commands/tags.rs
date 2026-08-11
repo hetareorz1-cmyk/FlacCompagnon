@@ -96,6 +96,20 @@ pub async fn write_tags_batch(
     .map_err(|e| e.to_string())
 }
 
+/// The curated "add a tag" list for the extended-tags pop-in's "+" button,
+/// resolved against one representative file's tag type — the batch always
+/// applies one edit to the whole selection, so one file's format is enough
+/// to know what can actually be written.
+#[tauri::command]
+pub async fn list_addable_tags(path: String) -> Result<Vec<core::tags::AddableTag>, String> {
+    let path = PathBuf::from(path);
+    tauri::async_runtime::spawn_blocking(move || {
+        core::tags::addable_tags(&path).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Read a plain image file dropped onto the tag panel's cover box (not one
 /// of the audio files in the table) — backs "drop an image to replace every
 /// selected file's cover".

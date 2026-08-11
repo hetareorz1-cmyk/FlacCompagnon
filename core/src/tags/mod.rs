@@ -23,6 +23,12 @@
 //! `Set` (write this value) — rather than the usual `Option<String>`, which
 //! can't distinguish "leave alone" from "set to empty".
 //!
+//! The extended-tags pop-in edits [`TagSet::extra`] the same way, just keyed
+//! by raw tag name instead of a fixed struct field: [`TagEdits::extra`] is a
+//! sparse `Vec<(String, FieldEdit)>` rather than a `HashMap`, since a batch
+//! write only ever touches a handful of keys and a `Vec` round-trips through
+//! `serde`/Tauri without the string-key caveats a `HashMap` would need.
+//!
 //! ## Module layout
 //!
 //! This module owns the text fields ([`TagSet`], [`FieldEdit`], [`TagEdits`])
@@ -30,10 +36,25 @@
 //! specific to the embedded picture — [`CoverArt`], [`CoverEdit`], MIME
 //! sniffing, mapping a role name to lofty's `PictureType` — lives in
 //! [`cover`], which `read_tags`/`write_tags` call into rather than handling
-//! inline. The cover types are re-exported here so existing callers
-//! (`core::tags::CoverArt`, etc.) don't need to know the split exists.
+//! inline. The extended-tags pop-in's "+" picker — its curated key list and
+//! the resolution against a file's tag type — lives in [`addable`]. Both are
+//! re-exported here so existing callers (`core::tags::CoverArt`,
+//! `core::tags::AddableTag`, etc.) don't need to know the split exists.
+//!
+//! What's left — [`TagSet`]/[`FieldEdit`]/[`TagEdits`] and [`read_tags`]/
+//! [`write_tags`] — is kept as one file rather than split further: it's one
+//! read/write round trip over one set of fields, and the "Batch-edit
+//! semantics" explanation above applies to all of it at once. Splitting the
+//! types from the functions that fill and consume them (or `read_tags` from
+//! `write_tags`) would scatter that one explanation across files that only
+//! make sense read together, for a line count a few dozen over the target —
+//! [`cover`] and [`addable`] were split out because they're each a genuinely
+//! separate concern *within* this module; there isn't a third one left to
+//! carve out here.
 
+pub mod addable;
 pub mod cover;
+pub use addable::{addable_tags, AddableTag};
 pub use cover::{cover_from_bytes, read_cover_file, write_cover_file, CoverArt, CoverEdit};
 
 use std::path::Path;
@@ -152,6 +173,14 @@ pub struct TagEdits {
     pub compilation: Option<bool>,
     /// Edit instruction for the embedded cover art.
     pub cover: CoverEdit,
+    /// Sparse add/edit/remove instructions for extended tags, keyed by the
+    /// same raw format-specific tag name [`TagSet::extra`] pairs use (e.g.
+    /// `"BPM"` in a FLAC's Vorbis comments, `"TBPM"` in an MP3's ID3v2
+    /// frames) — only the keys the extended-tags pop-in actually touched are
+    /// present, same sparse convention as the named fields above and for the
+    /// same reason: an untouched key must not clobber a file whose value
+    /// differed from what the panel showed.
+    pub extra: Vec<(String, FieldEdit)>,
 }
 
 /// Every [`ItemKey`] already surfaced as a named [`TagSet`] field — excluded
@@ -281,6 +310,17 @@ pub fn write_tags(path: &Path, edits: &TagEdits) -> Result<(), TagError> {
         );
     }
 
+    for (key, edit) in &edits.extra {
+        // A key this file's tag type has no mapping for (a Vorbis-only field
+        // on an MP3, say) is silently skipped rather than erroring the whole
+        // batch — the same mismatch already accepted for `Year` above, and
+        // for the same reason: the panel can't know a mixed-format selection
+        // supports every field on every file.
+        if let Some(item_key) = ItemKey::from_key(tag_type, key) {
+            apply_field(&mut tag, item_key, edit);
+        }
+    }
+
     cover::apply_edit(&mut tag, &edits.cover, &path.display().to_string())?;
 
     tag.save_to_path(path, WriteOptions::default())
@@ -330,6 +370,7 @@ mod tests {
             comment: FieldEdit::Set("Test comment".into()),
             compilation: Some(true),
             cover: CoverEdit::Unset,
+            extra: Vec::new(),
         };
         write_tags(&path, &edits).expect("write_tags should succeed on a fresh WAV");
 
@@ -456,6 +497,89 @@ mod tests {
         )
         .unwrap();
         assert_eq!(read_tags(&path).unwrap().musicbrainz_release_id, None);
+    }
+
+    /// An extended tag written through `edits.extra` round-trips through
+    /// `read_tags`'s own `extra`, keyed by the same raw format-specific
+    /// name — the extended-tags pop-in's "edit" and "add" cases.
+    #[test]
+    fn extra_tag_round_trips() {
+        let path = synth_wav();
+        let tagged = read_from_path(&path).unwrap();
+        let tag_type = tagged.primary_tag_type();
+        let key = ItemKey::Isrc
+            .map_key(tag_type)
+            .expect("ISRC maps on this format")
+            .to_string();
+
+        write_tags(
+            &path,
+            &TagEdits {
+                extra: vec![(key.clone(), FieldEdit::Set("US-S1Z-99-00001".into()))],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let read = read_tags(&path).unwrap();
+        assert_eq!(
+            read.extra
+                .iter()
+                .find(|(k, _)| *k == key)
+                .map(|(_, v)| v.as_str()),
+            Some("US-S1Z-99-00001")
+        );
+    }
+
+    /// The extended-tags pop-in's "−" button, staged as `Clear` — removes the
+    /// key entirely rather than leaving it present with an empty value.
+    #[test]
+    fn extra_tag_clear_removes_it() {
+        let path = synth_wav();
+        let tagged = read_from_path(&path).unwrap();
+        let tag_type = tagged.primary_tag_type();
+        let key = ItemKey::Isrc
+            .map_key(tag_type)
+            .expect("ISRC maps on this format")
+            .to_string();
+
+        write_tags(
+            &path,
+            &TagEdits {
+                extra: vec![(key.clone(), FieldEdit::Set("US-S1Z-99-00001".into()))],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(read_tags(&path).unwrap().extra.iter().any(|(k, _)| *k == key));
+
+        write_tags(
+            &path,
+            &TagEdits {
+                extra: vec![(key.clone(), FieldEdit::Clear)],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(!read_tags(&path).unwrap().extra.iter().any(|(k, _)| *k == key));
+    }
+
+    /// A key this file's tag type has no `ItemKey` mapping for must not fail
+    /// the whole write — the extended-tags panel can't know a mixed-format
+    /// selection supports every key its "+" list offers (see `write_tags`'s
+    /// doc comment on `Year`/`RecordingDate` for the same pattern with a
+    /// named field), so it's silently skipped instead.
+    #[test]
+    fn extra_tag_with_unmapped_key_is_silently_skipped() {
+        let path = synth_wav();
+        let result = write_tags(
+            &path,
+            &TagEdits {
+                extra: vec![("NOT_A_REAL_TAG_KEY_XYZ".into(), FieldEdit::Set("value".into()))],
+                ..Default::default()
+            },
+        );
+        assert!(result.is_ok());
     }
 
     #[test]
