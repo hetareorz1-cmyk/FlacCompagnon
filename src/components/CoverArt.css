@@ -95,7 +95,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 5px 12px 5px 16px;
+  /* Symmetric with the right side (was 16px left vs 12px right) — the marquee
+     text sat visibly further from the left edge than the icon group sits
+     from the right one. */
+  padding: 5px 12px;
   font-size: 10.5px;
   color: var(--muted);
   background: var(--bg-elev2);

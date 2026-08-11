@@ -20,8 +20,12 @@
   /* Horizontal padding matches .tag-panel-body/.tag-panel-actions — the three
      bands share one left/right gutter down the panel. Right padding leaves
      room for .tag-panel-close, which floats above this row rather than
-     sitting inside it (see below). */
-  padding: 14px 40px 10px 14px;
+     sitting inside it (see below). Top/bottom padding is equal (was 14/10,
+     visibly uneven — "Tags" sat closer to the bottom edge than the top of
+     its own band) so the heading centers vertically in the header strip
+     rather than reading as pushed down, and the strip itself is shorter now
+     that the top isn't carrying 4px more than it needs to. */
+  padding: 10px 36px 10px 14px;
   border-bottom: 1px solid var(--border);
 }
 .tag-panel-head h2 {
@@ -32,16 +36,16 @@
    there's otherwise no way back to the empty state once a selection opens
    it. Uses IconButton (`.icon-btn`, variant "close" — see IconButton.css).
    Positioned absolutely, clear of the header's baseline-aligned text row,
-   rather than inline next to "Tags": inline, it inherited the header's
-   14px top padding *plus* the baseline alignment's own offset, landing
-   well below where a corner button should sit. `top`/`right: 10px` — equal
-   to `--radius-lg`, the panel's own corner radius — tucks it right up
-   against the curve without its square bounding box poking into the
-   rounded corner itself. */
+   rather than inline next to "Tags": inline, it inherited the header's own
+   top padding *plus* the baseline alignment's own offset, landing well
+   below where a corner button should sit. `right: 6px`, a couple px inside
+   the exact `--radius-lg` offset the curve alone calls for — flush with the
+   curve read as sitting slightly too far from the edge in practice; this is
+   a deliberate small departure from that formula, not an oversight. */
 .tag-panel-close {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 6px;
 }
 .tag-panel-body {
   flex: 1;

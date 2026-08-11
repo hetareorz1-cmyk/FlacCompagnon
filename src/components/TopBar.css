@@ -41,10 +41,14 @@
   width: 272px;
   background: var(--bg-elev2);
   border: 1px solid var(--border);
-  /* --radius-lg, not the button/input tier: this field already matches the
-     tag panel's width, and now its curve too, so the two read as one pair
-     rather than the field being "just another input". */
-  border-radius: var(--radius-lg);
+  /* --radius-md, the button/input tier — same curve as the selection pill
+     and the other toolbar buttons right next to it in this row, so the bar
+     reads as one matched toolbar. This used to be --radius-lg to pair with
+     the tag panel below (same width), but that made it the odd one out
+     against its actual row neighbours, which sit right next to it and are
+     compared far more directly than a panel that only appears once a row is
+     selected. The width match with the tag panel still holds either way. */
+  border-radius: var(--radius-md);
   /* Left room for the search icon, right room for the clear button — kept
      even while it's hidden, so text doesn't shift under it once it appears. */
   padding: 7px 26px 7px 28px;

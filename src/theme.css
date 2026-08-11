@@ -100,30 +100,42 @@
   color: var(--text);
 
   /* Corner-radius scale, independent of theme (light/dark only touch colour).
-     Four tiers, each meant to nest inside the one above it — a flat 2px step
-     from one tier to the next:
+     Four tiers:
        lg   — major content-area containers (tag panel, dropzone, results
               table, progress bar shell) — interchangeable siblings in the
-              same layout slot, so they must match each other exactly. Also
-              used by the search filter field, which pairs with the tag
-              panel below it by width and now by radius, even though it
-              isn't actually nested inside anything.
-       card — dialogs/pop-ins (`.modal-card`) and card-like overlays. Not
-              nested inside `lg` either (modals float above the whole
-              window), so the two are free to match without it meaning
-              anything — they happen to right now.
+              same layout slot, so they must match each other exactly. Equal
+              to `md` (8px) rather than a step above it: the maintainer found
+              10px next to the toolbar's 8px buttons/inputs made the whole
+              app read as slightly inconsistent, and unlike `card` below,
+              nothing about these containers actually calls for standing a
+              tier apart from the controls that sit right next to them.
+       card — dialogs/pop-ins (`.modal-card`) and card-like overlays. Kept a
+              step above `lg`/`md`: modals float above the whole window
+              rather than sitting in the same row as a button, so there's no
+              adjacent control for them to match, and the extra 2px reads as
+              "this is a distinct layer" rather than an inconsistency.
        md   — anything you click into or type into (buttons, text inputs,
-              selects, list rows inside a dialog).
+              selects, list rows inside a dialog). The topbar's search field
+              is `md` too, matched to the toolbar buttons right next to it in
+              the same row — not `lg`, even though it also matches the tag
+              panel's *width*: the row it visually sits in wins over a panel
+              that only appears once a row is selected.
        sm   — small in-row controls (icon buttons, detection/quality tags).
        xs   — tiny inline elements (row thumbnails, the cover-role select).
      Nesting a `--radius-*` element inside a bigger one isn't just "pick a
      smaller number": for concentric-looking corners, inner = outer - gap
-     (the padding between them) — e.g. a --radius-lg (10px) panel with 14px
+     (the padding between them) — e.g. a --radius-lg (8px) panel with 14px
      padding wants a ~0px inner radius right at that padding's edge to stay
      concentric, but a control sitting well clear of the actual curve (as
      ours mostly do) just needs *a* smaller tier, not that exact subtraction.
+     A flush-against-the-edge exception that DOES use this exact subtraction:
+     `.tag-panel-close`'s `top` sits `--radius-lg` in from the panel's edge so
+     its square bounding box doesn't poke into the curve — keep it in sync
+     with this value if it changes again. Its `right` was nudged a couple px
+     tighter than that same formula on the maintainer's own visual call, so
+     don't "fix" it back to matching `top` without checking first.
      https://douglasmoura.dev/how-to-calculate-the-border-radius-of-nested-elements */
-  --radius-lg: 10px;
+  --radius-lg: 8px;
   --radius-card: 10px;
   --radius-md: 8px;
   --radius-sm: 6px;
