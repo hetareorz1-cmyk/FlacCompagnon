@@ -11,29 +11,38 @@
   display: flex;
   align-items: center;
   flex: none;
+  /* Clearance from the current-time text right after it: the slider's own
+     head can sit right at the track's edge (volume near max) and, with its
+     focus/hover ring, reads as overlapping "0:00" without this gap — the
+     row's general `gap` alone isn't enough since it's shared by every pair
+     in the row, not sized for this one. */
+  margin-right: 8px;
 }
-/* Collapsed to nothing at rest — revealed by hovering anywhere over the
-   icon+slider pair, not just the slider itself, so there's no dead zone
-   between the icon and where the slider appears. */
+/* Always takes up its full width — unlike an earlier version that animated
+   width from 0, which shrank the seek track by that same amount while
+   hovering (the two share the same flex row) and shifted it back the moment
+   the mouse left. Only opacity changes now, so nothing else in the footer
+   ever moves. It reveals on hovering the slider itself, not the icon or the
+   row as a whole, so muting via the icon can't also flash the slider open. */
 .playback-volume-slider {
-  width: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition:
-    width 0.15s ease,
-    opacity 0.15s ease;
-}
-.playback-volume:hover .playback-volume-slider,
-.playback-volume:focus-within .playback-volume-slider {
   width: 72px;
-  opacity: 1;
   margin-left: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
-.playback-volume-slider input[type="range"] {
+.playback-volume-slider:hover,
+.playback-volume-slider:focus-within {
+  opacity: 1;
+}
+/* Sizing override for the volume track — same `.playback-track` visuals
+   (line, fill, head) as the seek bar below, see that rule for why this isn't
+   a native `<input type="range">`: the seek bar's own `flex: 1` sizing
+   doesn't apply here, this one is a fixed short length instead. */
+.volume-track {
+  flex: none;
   width: 70px;
-  accent-color: var(--accent);
-  cursor: pointer;
-  vertical-align: middle;
+  max-width: none;
+  min-width: 0;
 }
 
 .playback-time {
@@ -88,4 +97,11 @@
 .playback-track.disabled {
   cursor: default;
   opacity: 0.5;
+}
+/* Only the volume track actually gets `tabIndex` (the seek track isn't
+   keyboard-operable), but this is harmless to state generically. */
+.playback-track:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
