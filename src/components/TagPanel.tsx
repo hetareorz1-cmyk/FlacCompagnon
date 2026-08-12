@@ -7,7 +7,7 @@
 // handler needs to ask "is the pointer over the cover box?" and, if an image
 // lands there, hand it in.
 
-import { useImperativeHandle, useMemo, useRef, useState, type Ref } from "react";
+import { useImperativeHandle, useMemo, useState, type Ref } from "react";
 import { X } from "lucide-react";
 
 import type { CoverArt as CoverArtData, LookupRelease, TagSet } from "../types";
@@ -26,9 +26,6 @@ import { applyExtraEdits, commonReleaseId, distinctCovers, extendedRows } from "
 import { useTagEditor } from "./useTagEditor";
 
 export interface TagPanelHandle {
-  /// Hit-test in logical (CSS) pixels — Tauri reports drop positions in
-  /// physical pixels, so the caller divides by the device pixel ratio first.
-  containsPoint(cssX: number, cssY: number): boolean;
   /// Stage a dropped image as the new cover for every selected file.
   stageCover(cover: CoverArtData): void;
   /// Toggle the cover box's loading spinner while a dropped image is being
@@ -76,7 +73,6 @@ export function TagPanel({
   onToast,
   ref,
 }: TagPanelProps) {
-  const coverBoxRef = useRef<HTMLDivElement>(null);
   // Snapshotted from CoverArt's `covers`/`index` at the moment the image is
   // clicked — not read live from `shownCovers` below, so an edit made while
   // the lightbox is open (unlikely, but the cover box stays interactive
@@ -126,12 +122,6 @@ export function TagPanel({
   useImperativeHandle(
     ref,
     () => ({
-      containsPoint(cssX: number, cssY: number) {
-        const el = coverBoxRef.current;
-        if (!el || tagSets.length === 0) return false;
-        const r = el.getBoundingClientRect();
-        return cssX >= r.left && cssX <= r.right && cssY >= r.top && cssY <= r.bottom;
-      },
       stageCover(cover: CoverArtData) {
         editor.stageCover(cover);
       },
@@ -145,7 +135,7 @@ export function TagPanel({
         editor.reset();
       },
     }),
-    [tagSets.length, editor],
+    [editor],
   );
 
   // Writes every distinct cover handed in as a plain file in the selection's
@@ -214,17 +204,15 @@ export function TagPanel({
         />
       </div>
 
-      <div ref={coverBoxRef}>
-        <CoverArt
-          covers={shownCovers}
-          dragOver={coverDragOver}
-          loading={coverLoading}
-          onOpenLightbox={(covers, index) => setLightbox({ covers, index })}
-          onRoleChange={editor.setCoverRole}
-          onDelete={() => setDeleteCoverOpen(true)}
-          onExtract={extractCovers}
-        />
-      </div>
+      <CoverArt
+        covers={shownCovers}
+        dragOver={coverDragOver}
+        loading={coverLoading}
+        onOpenLightbox={(covers, index) => setLightbox({ covers, index })}
+        onRoleChange={editor.setCoverRole}
+        onDelete={() => setDeleteCoverOpen(true)}
+        onExtract={extractCovers}
+      />
 
       <div className="tag-panel-body">
         {taggable ? (

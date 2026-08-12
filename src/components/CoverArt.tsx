@@ -1,7 +1,9 @@
-// Cover art at the top of the tag panel: full width at its own aspect ratio
-// (never cropped), with a banner underneath carrying the dimensions/format/
-// size and a role picker — Mac tag editors like Meta caption artwork below it
-// rather than above.
+// Cover art at the top of the tag panel: full width in a fixed square frame
+// (cropped via `object-fit: cover` when the source isn't square itself — see
+// CoverArt.css's `.tag-cover-frame` comment for why fixed-and-square won out
+// over showing every cover at its own native ratio), with a banner
+// underneath carrying the dimensions/format/size and a role picker — Mac tag
+// editors like Meta caption artwork below it rather than above.
 //
 // A selection whose files don't share one cover shows chevrons to cycle
 // through the distinct ones, auto-advancing every 3s, and disables the role
@@ -13,6 +15,7 @@ import { ChevronLeft, ChevronRight, ImageDown, Music, Trash2, Upload } from "luc
 
 import type { CoverArt as CoverArtData } from "../types";
 import { PICTURE_TYPE_LABELS, coverDataUrl, pictureTypeLabel } from "../format";
+import { dropZone } from "./dropZones";
 import "./CoverArt.css";
 import { IconButton } from "./IconButton";
 import { MarqueeText } from "./MarqueeText";
@@ -83,7 +86,8 @@ export function CoverArt({
 
   const cover = covers[index] ?? null;
   const url = cover ? coverDataUrl(cover) : null;
-  const frameClass = dragOver ? "tag-cover-frame drag-over" : "tag-cover-frame";
+  // No `drag-over` modifier on the frame: the whole drag feedback is the
+  // overlay below, which covers it edge to edge (see CoverArt.css).
 
   // Plain <button>s rather than IconButton: `.icon-btn`'s family is a flat,
   // muted-at-rest control meant for a toolbar or a table row, but these float
@@ -122,7 +126,9 @@ export function CoverArt({
   // the box itself, not to whatever happens to be inside it.
   return (
     <div className="tag-cover">
-      <div className={frameClass}>
+      {/* The drop target is this square alone, not the info band below it —
+          see dropZones.ts. */}
+      <div className="tag-cover-frame" {...dropZone("cover")}>
         {cover && url ? (
           <img
             className="tag-cover-img"

@@ -35,14 +35,16 @@ export function Progress({ label, percent, onCancel, cancelDisabled }: ProgressP
 }
 
 /// Shown instead of the drop highlight when files are dragged over the window
-/// mid-analysis — dropping is refused, and silently ignoring it would look
-/// like a bug.
-export function DropGuard() {
+/// while a batch (analysis or conversion) is running — dropping is refused,
+/// and silently ignoring it would look like a bug.
+export function DropGuard({ message = "Analysis in progress — please wait before dropping files" }: {
+  message?: string;
+}) {
   return (
     <div className="drop-guard">
       <div className="drop-guard-box">
         <span className="spinner" />
-        <p>Analysis in progress — please wait before dropping files</p>
+        <p>{message}</p>
       </div>
     </div>
   );

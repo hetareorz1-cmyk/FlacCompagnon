@@ -12,9 +12,19 @@
 }
 /* Full-bleed artwork: no border/radius/shadow, since it now sits flush
    against the panel's own edges rather than being an inset "well".
-   `.tag-cover-info` immediately below it forms one continuous block. */
+   `.tag-cover-info` immediately below it forms one continuous block.
+
+   Fixed at `aspect-ratio: 1/1` — a deliberate change from following the
+   cover's own ratio: this frame sits in the exact slot ConvertPanel's own
+   drop target does (`.convert-drop-frame`, ConvertDropzone.css), and the two
+   are meant to always read as the same height, whether or not either panel
+   currently has content. A cover that varies the frame's height with its own
+   ratio would make that height drift file to file too, not just between the
+   two panels — fixed-and-square avoids both at once. See `.tag-cover-img`
+   below for the `object-fit: cover` this trades for it. */
 .tag-cover-frame {
   position: relative;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   background: var(--bg-elev2);
   border-bottom: 1px solid var(--border);
@@ -24,14 +34,12 @@
 }
 /* Drop target for replacing the selection's cover — see `useNativeDrop`,
    driven by the webview's native drag-drop position events (HTML5 dragover
-   doesn't fire; same constraint as row reordering). `.drag-over` lands
-   directly on `.tag-cover-frame` (CoverArt re-renders that element on every
-   drag-position update). An inset ring is used instead of a border so the
-   drop feedback doesn't nudge the edge-to-edge layout. */
-.tag-cover-frame.drag-over {
-  box-shadow: inset 0 0 0 2px var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elev2));
-}
+   doesn't fire; same constraint as row reordering).
+   `.tag-cover-frame.drag-over` carries no styling of its own: the whole drag
+   feedback is `.tag-cover-overlay` below, which covers the frame edge to edge.
+   A ring and a background tint used to be declared here too and were painted
+   underneath that overlay, so they never showed — dead rules that made the
+   drop feedback look more complicated than it is. */
 /* Centered feedback layered over the frame: a drop-upload icon while
    something is being dragged over the box, a spinner once it's been
    released and is being read from disk. Sits above the image/placeholder
@@ -43,7 +51,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, black 35%, transparent);
+  background: var(--drop-veil);
   color: #fff;
   pointer-events: none;
 }
@@ -77,12 +85,15 @@
 .tag-cover-next {
   right: 6px;
 }
-/* Width fills the panel; height follows naturally from the image's own
-   aspect ratio (no cropping) — deliberately not object-fit: cover, so a
-   non-square cover isn't chopped down to a square. */
+/* Fills the fixed square `.tag-cover-frame` now defines. `object-fit: cover`
+   is the trade that square requires: a non-square cover is cropped to fit
+   rather than shown at its native ratio (what this rule did before the frame
+   was fixed-size) — accepted so the frame's height never depends on which
+   file is selected, matching ConvertDropzone's own fixed square. */
 .tag-cover-img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 /* Bandeau below the artwork — a distinct shaded strip (not just muted
@@ -139,9 +150,11 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+/* No `aspect-ratio` of its own anymore — `.tag-cover-frame` is the fixed
+   square now, so this just fills whatever frame it's dropped into. */
 .tag-cover-placeholder {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;

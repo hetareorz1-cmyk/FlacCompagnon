@@ -1,0 +1,180 @@
+/* Mirrors TagPanel.css's shell exactly (same width/radius/border) — the two
+   panels sit either side of the results table and are meant to read as one
+   family, not as a panel and an afterthought. */
+.convert-panel {
+  position: relative;
+  /* Above .app-freeze-overlay (z-index 40, App.css) so this panel — including
+     its own Cancel button — stays clickable through the freeze it itself
+     causes while a batch is running. */
+  z-index: 45;
+  flex: none;
+  width: 272px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.convert-panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 36px 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.convert-panel-head h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.convert-panel-close {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+}
+
+.convert-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Mirrors .tag-cover-info (CoverArt.css) — same slot under the drop target,
+   same shaded strip treatment — carrying the imported/selected count that
+   used to live in the Convert button's own label ("Convert all (3)"), plus
+   "Add N selected" when the main table has a selection this panel hasn't
+   imported yet. Unlike .tag-cover-info, always rendered (there's no "no
+   cover yet" equivalent to hide it for). */
+.convert-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 12px;
+  font-size: 10.5px;
+  color: var(--muted);
+  background: var(--bg-elev2);
+  border-bottom: 1px solid var(--border);
+}
+.convert-info-action {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.convert-info-action:hover {
+  text-decoration: underline;
+}
+
+/* Imported tracks, listed in drop order. Click toggles which ones "Convert
+   selected" applies to — there is no separate selection UI, the row itself
+   is the control, the same way a results table row's click both selects and
+   shows as selected. */
+.convert-item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.convert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+}
+.convert-item:hover {
+  background: var(--bg-elev2);
+}
+.convert-item.selected {
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-elev));
+}
+.convert-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.convert-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.convert-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+/* Box model copied field-for-field from `.tag-field input[type="text"]`
+   (TagField.css) — same font size, padding, border and radius — so a select
+   here and a text input in the tag panel come out the same height. They sit
+   in mirrored panels either side of the results table, where a couple of
+   pixels of difference reads as one of them being misaligned. A native
+   select adds its own chevron inside that box, which is why the right
+   padding is larger than the left. */
+.convert-field select {
+  width: 100%;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--text);
+  padding: 6px 24px 6px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-elev2);
+}
+.convert-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.convert-field select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+/* Stands in for the bitrate select on FLAC/WAV, which don't have one — same
+   slot, same muted tone, so the settings block doesn't just go quiet on
+   those two formats with nothing to explain why. */
+.convert-field-note {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.convert-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.convert-checkbox input {
+  margin-top: 2px;
+}
+
+.convert-panel-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+}
+.convert-panel-actions .btn {
+  flex: 1;
+}

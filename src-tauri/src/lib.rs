@@ -17,6 +17,9 @@
 //!   CSV/JSON reports, the M3U playlist, the spectrogram PNGs, an extracted
 //!   cover. The JSON report is re-importable by dropping it back onto the
 //!   window.
+//! * **[`commands::convert::convert_files`] writes new audio files** — the
+//!   conversion panel's whole purpose — under a folder the user picks
+//!   explicitly; the sources it reads from are never touched.
 //! * **One command renames a file without touching its content**:
 //!   [`commands::rename::rename_file`], from the results table's "click twice
 //!   on the name" — the audio and its tags are untouched, only the file's own
@@ -46,6 +49,7 @@ pub fn run() {
             commands::analysis::analyze_paths,
             commands::analysis::ffmpeg_available,
             commands::batch::cancel_task,
+            commands::convert::convert_files,
             commands::spectrograms::generate_spectrograms,
             commands::report::save_report_csv,
             commands::report::save_report_json,

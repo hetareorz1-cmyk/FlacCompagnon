@@ -3,6 +3,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   AddableTag,
+  ConvertSettings,
+  ConvertSummary,
   CoverArt,
   FolderReport,
   LookupCandidate,
@@ -135,3 +137,23 @@ export const lookupDiscogsDetail = (id: string, token: string) =>
 // match the chosen format, so it may differ from `dest`.
 export const savePlaylist = (dest: string, entries: PlaylistEntry[], format: PlaylistFormat) =>
   invoke<string>("save_playlist", { dest, entries, format });
+
+// Conversion: the panel's own imported tracks/folders (`targets`, independent
+// of the main results table), re-encoded under `outputRoot` mirroring their
+// source layout. `copyOthers` also copies every non-audio file sharing a
+// source folder (covers, `.m3u` playlists, generated spectrograms, ...)
+// verbatim, unconverted — "tout ou rien", no per-file choice. Progress
+// arrives on the `convert://progress` event, same `Progress` shape analysis
+// and spectrogram rendering already use.
+export const convertFiles = (
+  targets: string[],
+  outputRoot: string,
+  settings: ConvertSettings,
+  copyOthers: boolean,
+) =>
+  invoke<ConvertSummary>("convert_files", {
+    targets,
+    outputRoot,
+    settings,
+    copyOthers,
+  });

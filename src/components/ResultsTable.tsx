@@ -13,6 +13,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 import type { CoverArt, FileAnalysis, TagSet } from "../types";
 import { ColumnMenu } from "./ColumnMenu";
+import { dropZone } from "./dropZones";
 import { ResultRow } from "./ResultRow";
 import { sortFiles, type SortColumn, type SortState } from "./tableSort";
 import { useColumnDrag } from "./useColumnDrag";
@@ -159,7 +160,9 @@ export function ResultsTable({
     ));
 
   return (
-    <div className="table-wrap">
+    // Dropping audio anywhere on this list adds it, the same way the
+    // empty-state dropzone this replaces does — see dropZones.ts.
+    <div className="table-wrap" {...dropZone("list")}>
       <table ref={tableRef} className={sort ? "sorted" : undefined}>
         <thead
           onContextMenu={(ev) => {

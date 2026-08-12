@@ -68,6 +68,21 @@ export function useProgressEvents(onProgress: (p: Progress, verb: string) => voi
   }, [latest]);
 }
 
+// Conversion progress, kept apart from `useProgressEvents` above: that one
+// drives the shared bottom progress bar shown while the whole app is idle
+// between imports, but the conversion panel animates its own dropzone while
+// it runs instead (see ConvertPanel) — a separate listener, not a third verb
+// on the same one.
+export function useConvertProgress(onProgress: (p: Progress) => void) {
+  const latest = useLatest(onProgress);
+  useEffect(() => {
+    const c = listen<Progress>("convert://progress", (e) => latest.current(e.payload));
+    return () => {
+      void c.then((f) => f());
+    };
+  }, [latest]);
+}
+
 // The window starts hidden (tauri.conf.json: visible=false) and is revealed
 // once the page is fully loaded — not merely once this module has run.
 //

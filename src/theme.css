@@ -32,6 +32,13 @@
   --unknown: #616a7d;
   --shadow: rgba(20, 30, 50, 0.14);
   --row-hover: #e4eaf5;
+  /* How dark a drop target goes while something is being dragged over it —
+     the cover box and the conversion panel's drop zone share this, so the two
+     can't drift apart. Deliberately not redefined per palette: it's a wash of
+     black over whatever is underneath, and it has to read as *darker* in both
+     (a light-mode-only value would invert in dark mode and lighten instead).
+     The icon and label on top go white, so contrast holds either way. */
+  --drop-veil: color-mix(in srgb, black 35%, transparent);
   color-scheme: light;
 }
 

@@ -120,6 +120,18 @@ Pressing the footer's Play button decides what to play next from the selection *
 
 Previous/Next and the natural advance once a track finishes both follow whichever of those applies. That choice is made once, when Play starts — **changing the selection while something is already playing has no effect on the playback in progress**, only on the next time Play is pressed. Clicking the play icon on an individual row previews it directly (no tag panel or selection required) and follows the same rule for what it plays next.
 
+### 9. Conversion
+
+A second panel, mirroring the tag panel on the right, converts audio files to another format — entirely separate from the results table: what you drop into its own drop zone is analyzed for nothing, just converted. Open it from the toolbar's convert icon; the same **×** closes it as everywhere else.
+
+- **Formats**: **FLAC** (lossless, the default), **Opus** (lossy, recommended — free and efficient), **MP3** (lossy, for players/hardware that don't speak Opus), and **WAV** (uncompressed 16-bit PCM — a guaranteed-honest copy, useful for a file this app has flagged as fake-lossless). All four are royalty-free: FLAC and WAV need no codec license at all, Opus was designed royalty-free from the start, and MP3's patents have all expired. Opus and MP3 offer a bitrate picker; "Auto" uses a sensible default (160 kbps for Opus, 256 for MP3).
+- **One click converts everything imported.** Click a row in the imported list to toggle it; with at least one row toggled, the button switches to converting just that selection instead.
+- Converting asks for a **destination folder**, then **mirrors the source folder structure** underneath it — sub-folders and all — with each file's extension swapped for the new format's.
+- **"Also copy other files"** copies everything else that shares a source folder — covers, `.m3u` playlists, generated spectrograms, anything — to the same destination, unconverted. It's all-or-nothing: there's no per-file picker.
+- The drop zone animates while a batch runs, and the **whole app is frozen** for the duration (only the panel's own Cancel button stays live) — nothing else needs CPU cycles while your machine is busy encoding, and if a track was playing it's paused automatically first.
+
+Converting never touches your original files — it only ever writes new ones under the destination folder you pick. **DSD sources (`.dsf`/`.dff`) aren't convertible yet** (the fast decode path this feature uses doesn't handle DSD — only the separate ffmpeg-backed analysis path can); a DSD file dropped in reports a clear per-file error rather than being silently skipped. Opus and MP3 only accept a handful of fixed sample rates, so a hi-res source (88.2/96/176.4/192 kHz) is resampled first with a plain linear interpolator — good enough given how much both codecs' own psychoacoustic coding already discards, but not a mastering-grade resampler.
+
 ---
 
 ## Supported formats
@@ -238,6 +250,10 @@ Everything is pure Rust; there is no system library to install beyond Tauri's ow
 | [`cpal`](https://crates.io/crates/cpal) | Audio output for in-app playback (footer transport, click-to-preview from the table). |
 | [`reqwest`](https://crates.io/crates/reqwest) | The online tag lookup — the only crate here that touches the network. Uses **rustls**, so no system OpenSSL is required. |
 | [`base64`](https://crates.io/crates/base64) | Moving cover-art bytes between the Rust core and the webview. |
+| [`flacenc`](https://crates.io/crates/flacenc) | Conversion panel's FLAC encoder — pure Rust, no C toolchain required. |
+| [`hound`](https://crates.io/crates/hound) | Conversion panel's WAV encoder (also used by the test suite's own WAV fixtures). |
+| [`audiopus`](https://crates.io/crates/audiopus) / [`ogg`](https://crates.io/crates/ogg) | Conversion panel's Opus encoder (`audiopus` wraps `libopus`) and the Ogg container muxing around it (`ogg`, pure Rust) — Opus packets alone aren't a playable file. |
+| [`mp3lame-encoder`](https://crates.io/crates/mp3lame-encoder) | Conversion panel's MP3 encoder, wrapping LAME. |
 
 ### 1. Install dependencies
 
@@ -357,6 +373,8 @@ There are **two** exceptions, both explicit, deliberate actions that never happe
 
 If you want the guarantee that nothing can ever be written, simply don't use the tag panel's Save button and don't rename any file — every other feature is read-only.
 
+The **conversion panel** (see [above](#9-conversion)) is a separate case: it always writes **new** files, under a destination folder you explicitly pick each time — the sources it reads from are never modified or moved.
+
 ### Network use & privacy
 
 FlacCompagnon works **fully offline**. The single feature that makes a network request is the tag panel's **Search online** button, and only on that click:
@@ -380,6 +398,10 @@ Requests carry a descriptive `User-Agent` (as MusicBrainz's usage policy require
 - **Extended tags only offer a curated list of fields to add**, not a free-text custom key. lofty (the tagging library) can only write one of its own known tag keys, not an arbitrary made-up frame the way some tools' TXXX editors can, so a free-text field would silently do nothing for a name it doesn't recognize.
 - **The online lookup matches by text, not by audio.** It uses an existing MusicBrainz ID when the files carry one, otherwise the tags, otherwise a guess from the file name. It does **not** fingerprint the audio, so a badly-named, untagged file may need the query typed by hand.
 - **Playlists store absolute paths**, so they survive being opened from anywhere on the machine but break if the audio files are moved afterwards.
+- **Conversion's WAV output is fixed at 16-bit PCM**, not the source's own bit depth (unlike FLAC output, which preserves it) — deliberately, to keep the encoder call unambiguous; 24-bit WAV output may follow later. **AIFF is not offered** as a conversion target despite early planning around "WAV/AIFF" — WAV alone already covers the "guaranteed-honest PCM copy" use case, and adding a second PCM container didn't carry its own weight.
+- **Conversion doesn't support DSD sources** (`.dsf`/`.dff`) yet — see [Conversion](#9-conversion) above.
+
+
 
 ## Roadmap ideas
 

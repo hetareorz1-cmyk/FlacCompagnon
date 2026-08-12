@@ -10,6 +10,7 @@ import type { PlaylistFormat } from "./types";
 import * as api from "./api";
 import { commonDir, fileSearchText, matchesSearch } from "./format";
 import { ConfirmDialog } from "./components/ConfirmDialog";
+import { ConvertPanel } from "./components/ConvertPanel";
 import { Dropzone } from "./components/Dropzone";
 import { Footer } from "./components/Footer";
 import { DropGuard, Progress } from "./components/Progress";
@@ -21,11 +22,13 @@ import { nextSort, sortFiles, type SortColumn, type SortState } from "./componen
 import { TopBar } from "./components/TopBar";
 import { useAnalysis } from "./components/useAnalysis";
 import {
+  useConvertProgress,
   useMenuActions,
   useProgressEvents,
   useRevealWindow,
   useSuppressContextMenu,
 } from "./components/useAppEvents";
+import { useConvertPanel } from "./components/useConvertPanel";
 import { useExports } from "./components/useExports";
 import { useNativeDrop } from "./components/useNativeDrop";
 import { usePlayback } from "./components/usePlayback";
@@ -218,6 +221,44 @@ export function App() {
   const playback = usePlayback(displayedPaths, selection.selectedPaths, showToast);
   useTagPrefetch(orderedPaths, cache.fetchMissing);
 
+  // The conversion panel's own session — entirely separate from `analysis`
+  // (its imports never touch the results table). Pausing playback before a
+  // batch starts is this app's job, not the hook's: `useConvertPanel` has no
+  // idea whether anything is playing, so it just calls back here.
+  //
+  // The pause itself isn't just cosmetic: a batch runs the CPU-heavy encoders
+  // in parallel across cores (see `commands::batch::parallel_map_ordered`),
+  // and the audio callback thread competing for the same cores is a real way
+  // to get dropouts — pausing avoids that rather than hoping it doesn't
+  // happen. It's remembered in a ref (not state — nothing needs to re-render
+  // off it) so it can be resumed the moment the freeze lifts, rather than
+  // leaving the track paused for no reason once the batch is done.
+  const resumeAfterConvertRef = useRef(false);
+  const convert = useConvertPanel({
+    onToast: showToast,
+    onBeforeStart: () => {
+      resumeAfterConvertRef.current = playback.nowPlaying !== null && !playback.paused;
+      if (resumeAfterConvertRef.current) {
+        playback.togglePause();
+        showToast("Playback paused for the conversion");
+      }
+    },
+  });
+  useConvertProgress(convert.updateProgress);
+
+  // Fires once per batch, on the busy -> idle transition (success, failure,
+  // or cancel all end up here the same way, via `useConvertPanel`'s own
+  // `finally`) — the counterpart to `onBeforeStart` above.
+  const wasConvertBusy = useRef(convert.busy);
+  useEffect(() => {
+    if (wasConvertBusy.current && !convert.busy && resumeAfterConvertRef.current) {
+      playback.togglePause();
+      resumeAfterConvertRef.current = false;
+      showToast("Playback resumed");
+    }
+    wasConvertBusy.current = convert.busy;
+  }, [convert.busy, playback, showToast]);
+
   // What the footer's transport buttons show/trigger — see the hook's own
   // doc comment for why it reads `activeQueue` rather than recomputing.
   const playbackQueue = usePlaybackQueue({
@@ -241,9 +282,11 @@ export function App() {
 
   const drop = useNativeDrop({
     busy: analysis.busy,
+    converting: convert.busy,
     tagPanelRef,
     onAnalyze: analysis.analyze,
     onLoadReport: analysis.loadReport,
+    onImportForConvert: convert.addTargets,
     onToast: showToast,
   });
 
@@ -469,6 +512,7 @@ export function App() {
         onExportPlaylist={() => setPlaylistModalOpen(true)}
         onGenerateSpectrograms={() => void analysis.generateSpectrograms()}
         onReset={menuActions.reset}
+        onOpenConvert={convert.openPanel}
       />
 
       <div className="main-row">
@@ -487,7 +531,7 @@ export function App() {
 
         <div className="main-col">
           {!hasResults && !analysis.busy && (
-            <Dropzone dragOver={drop.overWindow} />
+            <Dropzone dragOver={drop.overList} />
           )}
 
           {hasResults &&
@@ -554,9 +598,50 @@ export function App() {
             />
           )}
         </div>
+
+        {convert.open && (
+          <ConvertPanel
+            targets={convert.targets}
+            selected={convert.selected}
+            format={convert.format}
+            bitrateKbps={convert.bitrateKbps}
+            copyOthers={convert.copyOthers}
+            busy={convert.busy}
+            cancelling={convert.cancelling}
+            progressLabel={convert.progressLabel}
+            dragOver={drop.overConvert}
+            mainSelectionCount={selection.selectedPaths.length}
+            onClose={convert.closePanel}
+            onSetFormat={convert.setFormat}
+            onSetBitrateKbps={convert.setBitrateKbps}
+            onSetCopyOthers={convert.setCopyOthers}
+            onRemoveTarget={convert.removeTarget}
+            onClearTargets={convert.clearTargets}
+            onToggleSelected={convert.toggleSelected}
+            onAddSelected={() => convert.addTargets(selection.selectedPaths)}
+            onConvert={() => void convert.convert()}
+            onCancel={() => void convert.cancel()}
+          />
+        )}
       </div>
 
-      {drop.blocked && <DropGuard />}
+      {/* Blocks every control app-wide while a conversion runs — "the whole
+          app should freeze" was explicit in the request, so this is a plain
+          click-blocking overlay rather than threading a `disabled` prop
+          through the toolbar, the table and the footer individually. Sits
+          below the conversion panel itself (see z-index in App.css), which
+          stays interactive for its own Cancel button. */}
+      {convert.busy && <div className="app-freeze-overlay" />}
+
+      {drop.blocked && (
+        <DropGuard
+          message={
+            convert.busy
+              ? "Conversion in progress — please wait before dropping files"
+              : "Analysis in progress — please wait before dropping files"
+          }
+        />
+      )}
 
       <PlaylistFormatModal
         open={playlistModalOpen}

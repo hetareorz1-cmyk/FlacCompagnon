@@ -87,8 +87,8 @@ export function TagFields({
       </label>
 
       {extendedCount > 0 && (
-        <button className="tag-extended-btn" type="button" onClick={onOpenExtended}>
-          Extended tags <span className="tag-extended-count">({extendedCount})</span>
+        <button className="link-btn" type="button" onClick={onOpenExtended}>
+          Extended tags <span className="link-btn-count">({extendedCount})</span>
         </button>
       )}
 

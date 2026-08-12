@@ -22,6 +22,9 @@
 //! * [`decode`] — one module per decode path.
 //! * [`analyzer`] — the single streaming pass that produces every measurement.
 //! * [`detections`] — measurements in, verdict out.
+//! * [`convert`] — re-encodes files to another format (FLAC/Opus/MP3/WAV);
+//!   the one place in this crate that writes audio files rather than only
+//!   reading them — see that module's own doc comment for why.
 //!
 //! # Example
 //!
@@ -75,6 +78,7 @@
 pub mod analyzer;
 pub mod bitdepth;
 pub mod clipping;
+pub mod convert;
 pub mod decode;
 pub mod detections;
 pub mod dsd;

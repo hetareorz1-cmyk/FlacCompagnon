@@ -8,6 +8,9 @@
 //! * [`analysis`] — run the detector over a set of targets.
 //! * [`batch`] — the cancellation flag and progress plumbing those long jobs
 //!   share, plus target expansion.
+//! * [`convert`] — re-encode the conversion panel's imported tracks to
+//!   another format, optionally copying everything else in their folders
+//!   alongside. The other command here (besides [`tags`]) that writes files.
 //! * [`spectrograms`] — render a PNG per track through ffmpeg.
 //! * [`report`] — write CSV/JSON reports and M3U playlists, and read a report
 //!   back in.
@@ -21,6 +24,7 @@
 
 pub mod analysis;
 pub mod batch;
+pub mod convert;
 pub mod files;
 pub mod lookup;
 pub mod player;

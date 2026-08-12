@@ -2,7 +2,16 @@
 // what's enabled is decided by the app state passed in.
 
 import { useRef } from "react";
-import { ArrowLeftRight, CheckSquare, ListMusic, ListOrdered, Search, Square, X } from "lucide-react";
+import {
+  ArrowLeftRight,
+  CheckSquare,
+  ListMusic,
+  ListOrdered,
+  Repeat,
+  Search,
+  Square,
+  X,
+} from "lucide-react";
 
 import { IconButton } from "./IconButton";
 import { useTheme } from "./useTheme";
@@ -42,6 +51,8 @@ export interface TopBarProps {
   onExportPlaylist: () => void;
   onGenerateSpectrograms: () => void;
   onReset: () => void;
+  /// Opens the conversion panel (right-hand side, mirroring the tag panel).
+  onOpenConvert: () => void;
 }
 
 export function TopBar({
@@ -62,6 +73,7 @@ export function TopBar({
   onExportPlaylist,
   onGenerateSpectrograms,
   onReset,
+  onOpenConvert,
 }: TopBarProps) {
   const theme = useTheme();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -143,6 +155,13 @@ export function TopBar({
         className="topbar-toolbtn"
         disabled={busy || !hasReport}
         onClick={onExportPlaylist}
+      />
+      <IconButton
+        icon={<Repeat size={17} strokeWidth={1.7} />}
+        title="Convert files…"
+        className="topbar-toolbtn"
+        disabled={busy}
+        onClick={onOpenConvert}
       />
       <div className="actions">
         <button className="btn" disabled={busy} onClick={onPick}>

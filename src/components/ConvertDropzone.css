@@ -1,0 +1,48 @@
+/* Sits between .convert-panel-head and the padded .convert-panel-body, same
+   slot .tag-cover-frame occupies in TagPanel. Both panels share the same
+   272px width, so matching TagPanel's empty-cover placeholder
+   (`.tag-cover-placeholder`, CoverArt.css) with the same `aspect-ratio: 1/1`
+   makes this box exactly as tall as the cover art block reads at rest —
+   the two panels are meant to look like siblings, and a shorter drop target
+   here was the one thing breaking that. */
+.convert-drop-frame {
+  position: relative;
+  flex: none;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--bg-elev2);
+  border-bottom: 1px solid var(--border);
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+.convert-drop-frame svg {
+  color: var(--accent);
+}
+/* Exactly the cover box's drag feedback (`.tag-cover-overlay`, CoverArt.css):
+   the same `--drop-veil` wash and white content, no ring and no border shift.
+   The two boxes sit in the same slot on either side of the results table, so
+   they have to answer a hover the same way. Painted as a background image
+   rather than an overlay element only because this box's icon and label are
+   its own children — there's nothing to cover, unlike artwork. */
+.convert-drop-frame.drag-over {
+  background-image: linear-gradient(var(--drop-veil), var(--drop-veil));
+  color: #fff;
+}
+.convert-drop-frame.drag-over svg {
+  color: #fff;
+}
+.convert-drop-text {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  max-width: 220px;
+}

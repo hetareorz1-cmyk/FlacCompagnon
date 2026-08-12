@@ -37,6 +37,21 @@
   min-height: 0;
 }
 
+/* Blocks every click app-wide while a conversion batch runs (see App.tsx's
+   own comment on why this is a plain overlay rather than a `disabled` prop
+   threaded through every component). Transparent — the animation the user
+   actually sees lives in the conversion panel's own drop target, not here.
+   z-index sits below DropGuard (50, Progress.css) and ColumnMenu (55) so
+   those still render on top if triggered mid-conversion, and below
+   .convert-panel's own z-index so the panel's Cancel button stays clickable
+   through the freeze it causes. */
+.app-freeze-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  cursor: not-allowed;
+}
+
 /* --- Toast --- */
 .toast {
   position: fixed;

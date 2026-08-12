@@ -239,3 +239,30 @@ export interface PlaylistEntry {
 }
 
 export type PlaylistFormat = "Simple" | "Extended";
+
+// --- Conversion (ConvertPanel) ------------------------------------------------
+
+// Mirrors Rust's `core::convert::ConvertFormat` (`#[serde(rename_all =
+// "lowercase")]` on a unit-only enum serializes as a plain string).
+export type ConvertFormat = "flac" | "opus" | "mp3" | "wav";
+
+export interface ConvertSettings {
+  format: ConvertFormat;
+  // kbps, only meaningful for "opus"/"mp3" — ignored (and may be omitted) for
+  // "flac"/"wav". `null`/omitted falls back to the backend's own default for
+  // whichever lossy format is picked.
+  bitrate_kbps: number | null;
+}
+
+export interface ConvertSummary {
+  total: number;
+  converted: number;
+  failed: number;
+  // Non-audio files (covers, playlists, spectrograms, ...) copied verbatim —
+  // 0 unless the "copy other files" option was on.
+  copied: number;
+  output_root: string;
+  // One "name: reason" message per failed file — a batch keeps going past a
+  // single bad file rather than aborting the rest.
+  errors: string[];
+}

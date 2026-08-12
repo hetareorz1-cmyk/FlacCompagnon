@@ -15,9 +15,12 @@
     border-color 0.15s,
     background 0.15s;
 }
+/* Only the border colour moves. The dashes stay dashed (they're what says
+   "drop target" at rest, and swapping them for a solid line reads as the box
+   turning into something else), and the background stays put — the icon swap
+   in Dropzone.tsx carries the "release now" signal instead. */
 .dropzone.drag-over {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elev));
 }
 .dropzone-inner {
   max-width: 580px;

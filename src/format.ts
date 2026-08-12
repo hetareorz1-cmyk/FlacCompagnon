@@ -7,11 +7,44 @@
 
 import type { CoverArt, Detections, FileAnalysis, FlacMd5Status } from "./types";
 
-/// Audio extensions, stripped when suggesting a file name from a dropped file.
+/// Audio extensions, stripped when suggesting a file name from a dropped
+/// file and used by [`isAudioPath`]. Mirrors `SUPPORTED_EXTENSIONS` in
+/// `core/src/scan.rs` — the backend decides what it can actually decode, this
+/// copy only exists so a drop can be refused without a round trip.
 const AUDIO_EXTS = [
   "flac", "wav", "wave", "aif", "aiff", "aifc", "alac", "m4a", "mp4", "caf",
-  "ogg", "oga", "mp3", "aac",
+  "ogg", "oga", "mp3", "aac", "dsf", "dff",
 ];
+
+/// Image extensions a dropped cover may have — see [`isImagePath`].
+const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "bmp", "webp"];
+
+/// The lowercase extension of `path`, or `null` when it has none — which for
+/// a dropped path most often means it's a folder.
+function extOf(path: string): string | null {
+  const name = path.split(/[\\/]/).pop() ?? "";
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(dot + 1).toLowerCase() : null;
+}
+
+/// Whether a dropped path could hold audio: a known audio extension, or no
+/// extension at all (a folder, which the backend will walk). Deliberately
+/// permissive — this only exists to catch the obvious mistake (dropping an
+/// image on an audio target); deciding what's really decodable is the
+/// backend's job, from the file's magic bytes rather than its name.
+export function isAudioPath(path: string): boolean {
+  const ext = extOf(path);
+  return ext == null || AUDIO_EXTS.includes(ext);
+}
+
+/// Whether a dropped path looks like an image, for the cover drop target.
+export function isImagePath(path: string): boolean {
+  const ext = extOf(path);
+  return ext != null && IMAGE_EXTS.includes(ext);
+}
+
+/// The image extensions [`isImagePath`] accepts, for error messages.
+export const IMAGE_EXT_LIST = IMAGE_EXTS.join(", ");
 
 /// Image MIME types a cover may legitimately declare. Anything else is treated
 /// as "no usable image" rather than passed through.
@@ -145,6 +178,14 @@ export function commonDir(paths: string[]): string {
     common = common.slice(0, i);
   }
   return common.join(sep) || sep;
+}
+
+/// A path's final component (file or folder name), the same split
+/// `useNativeDrop` already did inline for a dropped cover image's extension —
+/// centralized here now that the conversion panel's imported-items list needs
+/// the same thing for a whole path, not just its extension.
+export function baseName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 }
 
 /// Splits a file name into its editable stem and its extension (dot

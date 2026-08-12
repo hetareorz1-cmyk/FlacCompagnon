@@ -34,21 +34,6 @@
 
 /* Extended-tags link — opens ExtendedTagsModal with everything that isn't
    one of the common fields above (ISRC, BPM, ReplayGain, custom frames, ...),
-   read-only for now. */
-.tag-extended-btn {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  padding: 2px 0;
-  color: var(--accent);
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.tag-extended-btn:hover {
-  text-decoration: underline;
-}
-.tag-extended-count {
-  color: var(--muted);
-  font-weight: 400;
-}
+   read-only for now. Its look lives in `.link-btn` (shared.css) now that the
+   conversion panel uses the same pattern; nothing component-specific is left
+   to declare here. */
