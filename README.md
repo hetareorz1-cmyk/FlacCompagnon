@@ -230,6 +230,12 @@ All cut-off-based detection — LAC included — assumes genuine music has energ
 - [Node.js](https://nodejs.org/) 18+ and npm.
 - Tauri v2 system dependencies for your OS — see
   <https://v2.tauri.app/start/prerequisites/> (on Linux: `webkit2gtk`, `libayatana-appindicator`, etc.).
+- **autoconf, automake and libtool** — build-time only, for the Opus encoder.
+  The `audiopus_sys` crate compiles a vendored libopus with the autotools, so
+  `autoreconf` has to be on `PATH` or the build stops at "Failed to autogen
+  Opus". Most Linux setups already have them; macOS does not:
+    - macOS: `brew install autoconf automake libtool`
+    - Debian/Ubuntu: `sudo apt install autoconf automake libtool`
 - **ffmpeg** — only needed for the spectrogram feature. Install it with your package manager:
     - macOS: `brew install ffmpeg`
     - Debian/Ubuntu: `sudo apt install ffmpeg`
@@ -241,7 +247,7 @@ All cut-off-based detection — LAC included — assumes genuine music has energ
 
 ### Notable dependencies
 
-Everything is pure Rust; there is no system library to install beyond Tauri's own prerequisites (and the optional ffmpeg above).
+Nothing links against a system library: the two C codecs used for conversion (libopus, LAME) are vendored and built from source, so a finished binary needs nothing installed beyond Tauri's own runtime prerequisites (and the optional ffmpeg above). Building one, on the other hand, needs the autotools listed under Prerequisites — libopus is configured with them.
 
 | Crate | Used for |
 | --- | --- |

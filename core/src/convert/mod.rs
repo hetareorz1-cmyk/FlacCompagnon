@@ -20,8 +20,13 @@
 //! ([`flac`], crate `flacenc`, no C toolchain at all), WAV via plain PCM
 //! muxing ([`wav`], crate `hound`), and Opus/MP3 ([`opus`], [`mp3`]) via
 //! crates that vendor their respective C codec (`libopus`, LAME) from source
-//! rather than linking a system library — so building this app still needs
-//! nothing installed beyond a C compiler, which `cc`/`cargo` already assume.
+//! rather than linking a system library — so a built binary has no runtime
+//! dependency to install. *Building* is a different matter, and this comment
+//! used to get it wrong: `audiopus_sys` 0.1.x (what `audiopus` 0.2 pins)
+//! configures its vendored libopus with the autotools, so `autoreconf` has to
+//! be on PATH. That is fine on Linux, where the toolchain is usually already
+//! there, and not on a bare macOS box — see the README's prerequisites and the
+//! `brew install autoconf automake libtool` step in `.github/workflows/`.
 //! Opus and MP3's *patents* are what mattered here, not their build story:
 //! Opus was designed royalty-free from the start, and MP3's patents have all
 //! expired (the last, in the US, in 2017) — this app holds no codec license

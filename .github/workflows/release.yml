@@ -61,7 +61,18 @@ jobs:
             build-essential \
             libgtk-3-dev \
             libssl-dev \
-            libasound2-dev
+            libasound2-dev \
+            autoconf automake libtool
+
+      # `audiopus_sys` 0.1.x — the version `audiopus` 0.2 pins — builds its
+      # vendored libopus with the autotools, so `autoreconf` has to exist. The
+      # Ubuntu images ship it, the macOS ones do not, which is why the release
+      # build started failing the moment the Opus conversion target was added
+      # (`Failed to autogen Opus`). Only `audiopus_sys` >= 0.2 switched to
+      # cmake, and `audiopus` has no released version that depends on it yet.
+      - name: Install autotools for libopus (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: brew install autoconf automake libtool
 
       - name: Install frontend dependencies
         run: npm install

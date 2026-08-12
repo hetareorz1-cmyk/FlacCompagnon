@@ -23,7 +23,15 @@ jobs:
             build-essential \
             libgtk-3-dev \
             libssl-dev \
-            libasound2-dev
+            libasound2-dev \
+            autoconf automake libtool
+          # autoconf/automake/libtool are for `audiopus_sys` 0.1.x (pinned by
+          # `audiopus` 0.2), which builds its vendored libopus with the
+          # autotools rather than cmake. Listed explicitly even though the
+          # Ubuntu runner image already ships them, so that this build doesn't
+          # silently depend on what a hosted image happens to include — the
+          # macOS runner doesn't, and that is exactly how the release build
+          # broke.
 
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
