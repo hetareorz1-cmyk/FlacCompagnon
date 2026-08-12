@@ -10,7 +10,7 @@ use std::path::Path;
 use symphonia::core::audio::AudioBufferRef;
 use symphonia::core::errors::Error as SymError;
 
-use super::container::format_label;
+use super::container::{codec_label, format_label};
 use super::probe::{probe, InterleavedBuf};
 use super::DecodeOutcome;
 use crate::analyzer::StreamAnalyzer;
@@ -21,6 +21,7 @@ pub fn decode_and_analyze(path: &Path) -> Result<DecodeOutcome, AnalysisError> {
     let mut probed = probe(path, true)?;
     let sample_rate = probed.sample_rate()?;
     let channels = probed.channels()?;
+    let codec = codec_label(probed.params.codec).map(str::to_string);
     let declared_bits = probed.params.bits_per_sample;
     let declared_duration = probed
         .params
@@ -89,7 +90,8 @@ pub fn decode_and_analyze(path: &Path) -> Result<DecodeOutcome, AnalysisError> {
     };
 
     Ok(DecodeOutcome {
-        format: format_label(path),
+        format: format_label(path, codec.as_deref()),
+        codec,
         sample_rate,
         channels,
         declared_bits,

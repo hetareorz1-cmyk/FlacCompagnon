@@ -333,3 +333,23 @@ td.detections {
   padding: 22px 12px;
   white-space: normal;
 }
+
+/* Manual column reordering (press-and-hold + drag on the header cell, see
+   useColumnDrag.ts). No floating ghost like the row drag's — the source
+   header just dims in place, cursor included, since it's still visible
+   under the cursor the whole time (unlike a row, which can scroll out from
+   under a tall ghost stack). */
+thead th.col-dragging {
+  cursor: grabbing;
+  opacity: 0.35;
+}
+/* Insertion marker — a vertical rule on the edge the dragged column would
+   land against, same "border on the cell, not box-shadow" reasoning as the
+   row drag's own `.drop-before`/`.drop-after` (WKWebView renders box-shadow
+   on table cells unreliably). */
+thead th.col-drop-before {
+  box-shadow: inset 3px 0 0 var(--text);
+}
+thead th.col-drop-after {
+  box-shadow: inset -3px 0 0 var(--text);
+}

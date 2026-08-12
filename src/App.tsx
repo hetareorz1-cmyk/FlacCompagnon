@@ -504,6 +504,7 @@ export function App() {
                 <ResultsTable
                   files={analysis.orderedFiles}
                   covers={cache.covers}
+                  tags={cache.tags}
                   nowPlaying={playback.nowPlaying}
                   selectedPaths={selection.selectedPaths}
                   visiblePaths={visiblePaths}

@@ -40,12 +40,23 @@ struct JsonReport {
 /// `clip_events`/`peak_dbfs`) are grouped together at that cell's position
 /// rather than split across the row. No column is dropped — every field the
 /// old order exported is still here, just reordered.
+///
+/// `codec` and `bitrate_kbps` are deliberately slotted mid-row — right after
+/// `format` and right before `sample_rate` respectively — rather than at the
+/// end, on the maintainer's explicit request, even though the table's own
+/// column order is otherwise just a display preference (`useColumnPrefs.ts`)
+/// this file doesn't follow. This *is* a breaking change for any script or
+/// spreadsheet already reading the CSV by position: those two columns moved.
+/// `modified_unix` stays appended at the end — nobody asked to move that one,
+/// and there's no natural mid-row spot for it the way there is for the other
+/// two.
 pub fn build_csv(report: &FolderReport) -> String {
     let mut out = String::new();
     out.push_str(
-        "file,format,badge,sample_rate,declared_bits,real_bit_depth,duration_s,size_bytes,\
-         status,upscaling,upsampling,transcoding,aac_grid,cutoff_hz,cutoff_ratio,channels,\
-         fake_stereo,clipped,clip_events,peak_dbfs,true_peak_dbtp,dr_db,md5\n",
+        "file,format,codec,badge,bitrate_kbps,sample_rate,declared_bits,real_bit_depth,\
+         duration_s,size_bytes,status,upscaling,upsampling,transcoding,aac_grid,cutoff_hz,\
+         cutoff_ratio,channels,fake_stereo,clipped,clip_events,peak_dbfs,true_peak_dbtp,dr_db,\
+         md5,modified_unix\n",
     );
     for f in &report.files {
         let md5 = f
@@ -65,10 +76,12 @@ pub fn build_csv(report: &FolderReport) -> String {
             TranscodeState::Detected => "detected",
         };
         out.push_str(&format!(
-            "{},{},{},{},{},{},{:.3},{},{},{},{},{},{},{},{},{},{},{},{},{:.2},{:.2},{},{}\n",
+            "{},{},{},{},{},{},{},{},{:.3},{},{},{},{},{},{},{},{},{},{},{},{},{:.2},{:.2},{},{},{}\n",
             csv_escape(&f.file_name),
             f.format,
+            f.codec.clone().unwrap_or_default(),
             f.badge.clone().unwrap_or_default(),
+            opt(f.bitrate_kbps),
             f.sample_rate,
             opt(f.declared_bits),
             opt(f.real_bit_depth),
@@ -91,6 +104,7 @@ pub fn build_csv(report: &FolderReport) -> String {
             f.clipping.true_peak_dbtp,
             f.dr_db.map(|v| format!("{v:.1}")).unwrap_or_default(),
             md5,
+            opt(f.modified_unix),
         ));
     }
     out
@@ -182,12 +196,15 @@ mod tests {
             path: "/music/a.flac".into(),
             file_name: "a.flac".into(),
             format: "FLAC".into(),
+            codec: None,
             ext_mismatch: false,
             sample_rate: 44_100,
             channels: 2,
             declared_bits: Some(16),
             duration_secs: 183.4,
             size_bytes: 32_345_678,
+            bitrate_kbps: Some(1412),
+            modified_unix: Some(1_700_000_000),
             detections: Detections {
                 upscaling: false,
                 upsampling: false,
@@ -227,7 +244,8 @@ mod tests {
         let lines: Vec<&str> = csv.lines().collect();
         assert_eq!(lines.len(), 2);
         assert!(lines[0].starts_with("file,format"));
-        assert!(lines[0].trim_end().ends_with(",md5"));
+        assert!(lines[0].contains(",md5,"));
+        assert!(lines[0].trim_end().ends_with(",modified_unix"));
         assert!(lines[1].contains("a.flac"));
         assert!(lines[1].contains("ok"));
         // The size is exported as a raw byte count, not a formatted string,
@@ -241,6 +259,25 @@ mod tests {
             lines[1].split(',').count(),
             "CSV header and row column counts must match"
         );
+    }
+
+    /// Locks in the maintainer's explicit request to move `codec` and
+    /// `bitrate_kbps` out of their original "appended at the end" spot —
+    /// see `build_csv`'s doc comment for why that's a deliberate exception.
+    #[test]
+    fn csv_places_codec_after_format_and_bitrate_before_sample_rate() {
+        let report = FolderReport {
+            root: "/music".into(),
+            files: vec![sample_file()],
+            has_flac: true,
+        };
+        let csv = build_csv(&report);
+        let header: Vec<&str> = csv.lines().next().expect("header line").split(',').collect();
+        assert_eq!(header.get(1), Some(&"format"));
+        assert_eq!(header.get(2), Some(&"codec"));
+        let bitrate_idx = header.iter().position(|&h| h == "bitrate_kbps").expect("bitrate_kbps");
+        let rate_idx = header.iter().position(|&h| h == "sample_rate").expect("sample_rate");
+        assert_eq!(bitrate_idx + 1, rate_idx, "bitrate_kbps must sit right before sample_rate");
     }
 
     #[test]

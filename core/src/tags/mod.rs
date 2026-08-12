@@ -124,6 +124,13 @@ pub struct TagSet {
     /// a fuzzy text search — still surfaced under its raw tag name in
     /// `extra` too, so it's visible in the extended-tags viewer.
     pub musicbrainz_release_id: Option<String>,
+    /// The tool (and often its version) that produced this file, when it left
+    /// one behind — FLAC's Vorbis comment vendor string, an MP3's ID3v2
+    /// `TSSE` frame, and so on (`ItemKey::EncoderSoftware`). Read-only: this
+    /// is diagnostic information about the file's own history, not something
+    /// the tag panel offers to edit, so it has no `TagEdits` counterpart.
+    #[serde(default)]
+    pub encoder: Option<String>,
 }
 
 /// A single field's edit instruction for a batch write.
@@ -200,6 +207,7 @@ const KNOWN_KEYS: &[ItemKey] = &[
     ItemKey::DiscNumber,
     ItemKey::DiscTotal,
     ItemKey::FlagCompilation,
+    ItemKey::EncoderSoftware,
 ];
 
 fn parse_err(path: &Path, e: impl std::fmt::Display) -> TagError {
@@ -235,6 +243,10 @@ pub fn read_tags(path: &Path) -> Result<TagSet, TagError> {
     out.compilation = tag.get_string(ItemKey::FlagCompilation) == Some("1");
     out.musicbrainz_release_id = tag
         .get_string(ItemKey::MusicBrainzReleaseId)
+        .map(str::to_string)
+        .filter(|s| !s.is_empty());
+    out.encoder = tag
+        .get_string(ItemKey::EncoderSoftware)
         .map(str::to_string)
         .filter(|s| !s.is_empty());
 

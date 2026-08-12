@@ -4,28 +4,28 @@
 // renders the same placeholder as "no cover at all" — so the row appears
 // immediately and fills in later without needing a distinct loading state.
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { GripVertical, Music, Play, Search, Square, Trash2 } from "lucide-react";
 
-import type { CoverArt, FileAnalysis } from "../types";
-import { coverDataUrl, fmtCutoff, fmtDuration, fmtSize, splitStem } from "../format";
+import type { CoverArt, FileAnalysis, TagSet } from "../types";
+import { coverDataUrl, splitStem } from "../format";
 import { IconButton } from "./IconButton";
 import { LiveEqualizerBars } from "./LiveEqualizerBars";
+import type { ColumnDef } from "./resultColumns";
 import "./ResultRow.css";
-import {
-  ClippingCell,
-  DetectionsCell,
-  DynamicRangeCell,
-  Md5Cell,
-  QualityBadgeCell,
-  RealBitsCell,
-  StereoCell,
-  TruePeakCell,
-} from "./ResultCells";
 
 export interface ResultRowProps {
   file: FileAnalysis;
   cover: CoverArt | null | undefined;
+  /// This file's tags, for the optional tag-derived columns — `null` until
+  /// loaded (or if it has none/failed to read), same contract as `cover`.
+  tag: TagSet | null;
+  /// Everything between the fixed filename cell and the fixed delete button,
+  /// shown/hidden/ordered from the header's right-click menu — see
+  /// resultColumns.tsx. Drives both the cell count (this row's `colSpan` on
+  /// an error, and the header's own column count in ResultsTable) and what
+  /// actually renders here.
+  columns: ColumnDef[];
   playing: boolean;
   /// Set together with `playing` — identifies which `playback://level` events
   /// belong to this row's track (see `LiveEqualizerBars`).
@@ -35,9 +35,6 @@ export interface ResultRowProps {
   dragging: boolean;
   /// Insertion marker during a drag.
   dropEdge: "before" | "after" | null;
-  columnCount: number;
-  showMd5: boolean;
-  showBadge: boolean;
   /// Shows an editable field instead of plain text — ResultsTable decides
   /// when this turns on (a second, well-spaced click on an already-sole-
   /// selected row's name; see its `RENAME_CLICK_GAP_MS`).
@@ -83,14 +80,13 @@ function rowClass(selected: boolean, dragging: boolean, dropEdge: "before" | "af
 export function ResultRow({
   file: f,
   cover,
+  tag,
+  columns,
   playing,
   playingRequestId,
   selected,
   dragging,
   dropEdge,
-  columnCount,
-  showMd5,
-  showBadge,
   editing,
   renameBusy,
   onReveal,
@@ -252,7 +248,7 @@ export function ResultRow({
         {revealCell}
         <td className="thumb" />
         {nameCell}
-        <td colSpan={columnCount - 5} className="c-bad">
+        <td colSpan={columns.length} className="c-bad">
           Error: {f.error}
         </td>
         {deleteCell}
@@ -270,32 +266,9 @@ export function ResultRow({
       {revealCell}
       {thumbCell}
       {nameCell}
-      {f.ext_mismatch ? (
-        <td
-          className="c-bad has-tip"
-          title={`Real container is ${f.format}, which does not match the file extension`}
-        >
-          {f.format}
-        </td>
-      ) : (
-        <td>{f.format}</td>
-      )}
-      {showBadge && <QualityBadgeCell badge={f.badge} />}
-      <td>{(f.sample_rate / 1000).toFixed(1)}k</td>
-      <td>{f.declared_bits != null ? `${f.declared_bits}-bit` : "float"}</td>
-      <RealBitsCell f={f} />
-      <td>{fmtDuration(f.duration_secs)}</td>
-      <td className="size has-tip" title={`${f.size_bytes.toLocaleString()} bytes`}>
-        {fmtSize(f.size_bytes)}
-      </td>
-      <DetectionsCell d={f.detections} />
-      <td>{fmtCutoff(f)}</td>
-      <td>{f.channels}</td>
-      <StereoCell f={f} />
-      <ClippingCell c={f.clipping} />
-      <TruePeakCell dbtp={f.clipping.true_peak_dbtp} />
-      <DynamicRangeCell dr={f.dr_db} />
-      {showMd5 && <Md5Cell m={f.flac_md5} />}
+      {columns.map((col) => (
+        <Fragment key={col.key}>{col.render(f, tag)}</Fragment>
+      ))}
       {deleteCell}
     </tr>
   );

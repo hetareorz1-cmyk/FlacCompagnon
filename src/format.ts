@@ -86,6 +86,19 @@ export function fmtCutoff(f: FileAnalysis): string {
   return `${(f.cutoff_hz / 1000).toFixed(1)} kHz (${Math.round(f.cutoff_ratio * 100)}%)`;
 }
 
+export function fmtBitrate(kbps: number | null): string {
+  if (kbps == null) return "—";
+  return `${kbps} kbps`;
+}
+
+/// Locale-formatted date from a Unix-seconds timestamp (`FileAnalysis.
+/// modified_unix`) — no time-of-day component, since the column is about
+/// "which file changed last", not a precise moment.
+export function fmtModified(unixSecs: number | null): string {
+  if (unixSecs == null) return "—";
+  return new Date(unixSecs * 1000).toLocaleDateString();
+}
+
 /// `CoverArt.picture_type` is Rust's `Debug` output for lofty's `PictureType`
 /// enum (e.g. `"CoverFront"`). These keys are exactly the strings
 /// `core::tags::parse_picture_type` understands on the Rust side; anything

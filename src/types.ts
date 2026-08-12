@@ -31,6 +31,10 @@ export interface FileAnalysis {
   path: string;
   file_name: string;
   format: string;
+  // The codec inside `format`, when that distinction means something (an MP4
+  // can hold ALAC or AAC) — `null` for single-codec containers, where it
+  // would just repeat `format`. See core's `FileAnalysis::codec` doc comment.
+  codec: string | null;
   ext_mismatch: boolean;
   sample_rate: number;
   channels: number;
@@ -39,6 +43,11 @@ export interface FileAnalysis {
   // On-disk size in bytes, read from the filesystem by the Rust side so it
   // matches what the OS reports (never derived from bitrate × duration).
   size_bytes: number;
+  // Average bitrate in kbps (`size_bytes * 8 / duration_secs`) — `null` when
+  // the duration isn't known.
+  bitrate_kbps: number | null;
+  // Filesystem modification time, Unix seconds — `null` if unreadable.
+  modified_unix: number | null;
   detections: Detections;
   cutoff_hz: number | null;
   cutoff_ratio: number | null;
@@ -106,6 +115,10 @@ export interface TagSet {
   // MusicBrainz Release ID already in the file's tags (e.g. from Picard), if
   // any — lets "Search online" skip straight to that exact release.
   musicbrainz_release_id: string | null;
+  // The tool that produced this file, when it left a signature behind (FLAC's
+  // Vorbis comment vendor string, an MP3's ID3v2 TSSE frame, ...). Read-only —
+  // no counterpart in TagEdits.
+  encoder: string | null;
 }
 
 export interface TagReadResult {

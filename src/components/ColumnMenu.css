@@ -1,0 +1,45 @@
+/* Full-viewport, transparent — exists only to catch the click/right-click
+   that dismisses the menu, same trick as Modal.css's own backdrop but
+   without the dimming, since this floats over a header, not the whole app. */
+.column-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+}
+/* Pop-in tier, like Modal's `.modal-card` — this floats above the whole
+   window rather than sitting in the header row it was triggered from, so it
+   gets the same "distinct layer" radius as a dialog. */
+.column-menu {
+  position: absolute;
+  min-width: 190px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 8px 30px var(--shadow);
+  padding: 6px;
+}
+.column-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+}
+.column-menu-row:hover {
+  background: var(--bg-elev2);
+}
+.column-menu-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

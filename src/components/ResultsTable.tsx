@@ -1,18 +1,35 @@
-// The results table: header, rows, selection clicks and drag-to-reorder.
+// The results table: header, rows, selection clicks and drag-to-reorder —
+// both rows (useRowDrag.ts) and, since the column system grew reorderable
+// columns, the header cells themselves (useColumnDrag.ts).
 //
-// Two columns are conditional rather than always-present-but-empty: MD5 only
-// means something when the analysis actually included FLAC files, and Quality
-// only when at least one file earned a badge.
+// Quality and MD5 are reorderable/toggleable columns like any other (see
+// resultColumns.tsx) plus one extra, data-driven filter applied here: Quality
+// only when at least one file earned a badge, MD5 only when the analysis
+// actually included FLAC files — on top of, not instead of, the user's own
+// show/hide choice.
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import type { CoverArt, FileAnalysis } from "../types";
+import type { CoverArt, FileAnalysis, TagSet } from "../types";
+import { ColumnMenu } from "./ColumnMenu";
 import { ResultRow } from "./ResultRow";
 import { sortFiles, type SortColumn, type SortState } from "./tableSort";
+import { useColumnDrag } from "./useColumnDrag";
+import { useColumnPrefs } from "./useColumnPrefs";
 import { useRowDrag } from "./useRowDrag";
 import type { SelectionModifiers } from "./useSelection";
 import "./ResultsTable.css";
+
+// Columns that precede the reorderable ones and never move: the drag handle,
+// reveal, thumbnail and filename cells. "File" sorts (there's a real column
+// beneath it) but its position is fixed, same as the trailing delete column.
+const LEAD_HEADERS: { label: string; sort?: SortColumn }[] = [
+  { label: "" }, // drag handle
+  { label: "" }, // reveal button
+  { label: "" }, // thumbnail / play button
+  { label: "File", sort: "file" },
+];
 
 // Mp3tag/Finder-style "click twice on the name to rename": a real double
 // click still just selects (browsers fire two separate click events for one,
@@ -25,6 +42,11 @@ const RENAME_CLICK_GAP_MS = 500;
 export interface ResultsTableProps {
   files: FileAnalysis[];
   covers: Map<string, CoverArt | null>;
+  /// Backs the optional tag-derived columns (Artist, Album, ...) — the same
+  /// cache the tag panel and thumbnail column already share, prefetched for
+  /// every file in `App.tsx`, so showing one of these columns for the first
+  /// time doesn't trigger a new read.
+  tags: Map<string, TagSet | null>;
   nowPlaying: { path: string; requestId: number } | null;
   selectedPaths: string[];
   /// Which rows to actually render; `null` means "everything" (no filter
@@ -59,6 +81,7 @@ export interface ResultsTableProps {
 export function ResultsTable({
   files,
   covers,
+  tags,
   nowPlaying,
   selectedPaths,
   visiblePaths,
@@ -105,38 +128,47 @@ export function ResultsTable({
   const showMd5 = files.some((f) => f.flac_md5 != null);
   const showBadge = files.some((f) => f.badge != null);
 
-  const headers: { label: string; sort?: SortColumn }[] = [
-    { label: "" }, // drag handle
-    { label: "" }, // reveal button
-    { label: "" }, // thumbnail / play button
-    { label: "File", sort: "file" },
-    { label: "Format", sort: "format" },
-    ...(showBadge ? [{ label: "Quality", sort: "badge" as const }] : []),
-    { label: "Rate", sort: "rate" },
-    { label: "Bits", sort: "bits" },
-    { label: "Real bits", sort: "realBits" },
-    { label: "Length", sort: "length" },
-    { label: "Size", sort: "size" },
-    { label: "Detections", sort: "detections" },
-    { label: "Cutoff", sort: "cutoff" },
-    { label: "Ch", sort: "channels" },
-    { label: "Stereo", sort: "stereo" },
-    { label: "Clipping", sort: "clipping" },
-    { label: "True Peak", sort: "truePeak" },
-    { label: "Dynamics", sort: "dynamics" },
-    ...(showMd5 ? [{ label: "MD5", sort: "md5" as const }] : []),
-    { label: "" }, // delete button
-  ];
+  // The user's shown/hidden, reordered selection, with Quality/MD5 additionally
+  // dropped when the data doesn't warrant them — see the module doc comment.
+  const { visibleColumns, menuRows, toggle, reorder } = useColumnPrefs();
+  const middleColumns = visibleColumns.filter((col) => {
+    if (col.conditional === "badge") return showBadge;
+    if (col.conditional === "md5") return showMd5;
+    return true;
+  });
+
+  const [colMenu, setColMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const {
+    dragState: colDragState,
+    onColumnMouseDown,
+    consumeClickSuppression: consumeColumnClickSuppression,
+  } = useColumnDrag({ onReorder: reorder });
 
   const selected = new Set(selectedPaths);
   const dragging = new Set(dragState.active ? dragState.paths : []);
+  const totalColumns = LEAD_HEADERS.length + middleColumns.length + 1; // +1: delete button
+
+  const sortIndicator = (col?: SortColumn) =>
+    col &&
+    sort?.column === col &&
+    (sort.direction === "asc" ? (
+      <ChevronDown size={12} strokeWidth={2.4} />
+    ) : (
+      <ChevronUp size={12} strokeWidth={2.4} />
+    ));
 
   return (
     <div className="table-wrap">
       <table ref={tableRef} className={sort ? "sorted" : undefined}>
-        <thead>
+        <thead
+          onContextMenu={(ev) => {
+            ev.preventDefault();
+            setColMenu({ x: ev.clientX, y: ev.clientY });
+          }}
+        >
           <tr>
-            {headers.map((h, i) =>
+            {LEAD_HEADERS.map((h, i) =>
               h.sort ? (
                 <th key={`${h.label}-${i}`}>
                   <button
@@ -145,24 +177,52 @@ export function ResultsTable({
                     onClick={() => onSortChange(h.sort as SortColumn)}
                   >
                     {h.label}
-                    {sort?.column === h.sort &&
-                      (sort.direction === "asc" ? (
-                        <ChevronDown size={12} strokeWidth={2.4} />
-                      ) : (
-                        <ChevronUp size={12} strokeWidth={2.4} />
-                      ))}
+                    {sortIndicator(h.sort)}
                   </button>
                 </th>
               ) : (
                 <th key={`${h.label}-${i}`}>{h.label}</th>
               ),
             )}
+            {middleColumns.map((col) => (
+              <th
+                key={col.key}
+                data-col-key={col.key}
+                className={
+                  colDragState.key === col.key && colDragState.dragging
+                    ? "col-dragging"
+                    : colDragState.dropTarget?.key === col.key
+                      ? colDragState.dropTarget.before
+                        ? "col-drop-before"
+                        : "col-drop-after"
+                      : undefined
+                }
+                onMouseDown={(ev) => onColumnMouseDown(col.key, ev)}
+              >
+                {col.sort ? (
+                  <button
+                    type="button"
+                    className="th-sort"
+                    onClick={() => {
+                      if (consumeColumnClickSuppression()) return;
+                      onSortChange(col.sort as SortColumn);
+                    }}
+                  >
+                    {col.label}
+                    {sortIndicator(col.sort)}
+                  </button>
+                ) : (
+                  col.label
+                )}
+              </th>
+            ))}
+            <th key="delete" />
           </tr>
         </thead>
         <tbody>
           {visibleFiles.length === 0 && files.length > 0 ? (
             <tr>
-              <td className="no-matches muted" colSpan={headers.length}>
+              <td className="no-matches muted" colSpan={totalColumns}>
                 No files match the filter.
               </td>
             </tr>
@@ -172,6 +232,8 @@ export function ResultsTable({
                 key={f.path}
                 file={f}
                 cover={covers.get(f.path)}
+                tag={tags.get(f.path) ?? null}
+                columns={middleColumns}
                 playing={nowPlaying?.path === f.path}
                 playingRequestId={nowPlaying?.path === f.path ? nowPlaying.requestId : null}
                 selected={selected.has(f.path)}
@@ -183,9 +245,6 @@ export function ResultsTable({
                       : "after"
                     : null
                 }
-                columnCount={headers.length}
-                showMd5={showMd5}
-                showBadge={showBadge}
                 editing={editingPath === f.path}
                 renameBusy={renameBusy}
                 onReveal={() => onReveal(f.path)}
@@ -221,6 +280,14 @@ export function ResultsTable({
           )}
         </tbody>
       </table>
+      <ColumnMenu
+        open={colMenu != null}
+        x={colMenu?.x ?? 0}
+        y={colMenu?.y ?? 0}
+        rows={menuRows}
+        onToggle={toggle}
+        onClose={() => setColMenu(null)}
+      />
     </div>
   );
 }

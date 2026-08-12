@@ -7,6 +7,14 @@
 
 use std::path::Path;
 
+use symphonia::core::codecs::{
+    CodecType, CODEC_TYPE_AAC, CODEC_TYPE_ALAC, CODEC_TYPE_FLAC, CODEC_TYPE_MP1, CODEC_TYPE_MP2,
+    CODEC_TYPE_MP3, CODEC_TYPE_OPUS, CODEC_TYPE_PCM_F32BE, CODEC_TYPE_PCM_F32LE,
+    CODEC_TYPE_PCM_F64BE, CODEC_TYPE_PCM_F64LE, CODEC_TYPE_PCM_S16BE, CODEC_TYPE_PCM_S16LE,
+    CODEC_TYPE_PCM_S24BE, CODEC_TYPE_PCM_S24LE, CODEC_TYPE_PCM_S32BE, CODEC_TYPE_PCM_S32LE,
+    CODEC_TYPE_PCM_S8, CODEC_TYPE_PCM_U8, CODEC_TYPE_VORBIS,
+};
+
 /// Detect the *real* container from the file's magic bytes, independent of its
 /// extension. Returns a canonical short name, or `None` if unrecognized.
 pub fn detect_container(path: &Path) -> Option<&'static str> {
@@ -79,26 +87,72 @@ pub fn ext_canonical(path: &Path) -> Option<&'static str> {
     }
 }
 
-/// Human-readable container/codec label from the file extension.
+/// Human-readable container/codec label from the file extension, and — for
+/// containers that can hold more than one codec — the codec Symphonia
+/// actually identified.
 ///
 /// Deliberately not the same mapping as [`ext_canonical`]: this one is shown
-/// to the user (so MP4 that holds ALAC reads "ALAC/MP4") and falls back to the
-/// uppercased extension for anything unknown, while `ext_canonical` returns a
-/// strict canonical name used to compare against the detected container.
-pub(super) fn format_label(path: &Path) -> String {
+/// to the user, and falls back to the uppercased extension for anything
+/// unknown, while `ext_canonical` returns a strict canonical name used to
+/// compare against the detected container.
+///
+/// `codec` only changes anything for `.m4a`/`.mp4`/`.alac`: an MP4 container
+/// can hold ALAC (lossless) or AAC (lossy), and always assuming ALAC — as an
+/// earlier version of this function did — meant an AAC-in-MP4 file (lossy)
+/// displayed as "ALAC/MP4", reading as lossless when it plainly is not, in
+/// an app whose whole point is catching exactly that kind of
+/// mislabeling. `None` (codec unresolved, e.g. a probe failure) falls back
+/// to the previous "ALAC/MP4" default, since that's still the more common
+/// case for this extension.
+pub(super) fn format_label(path: &Path, codec: Option<&str>) -> String {
     match lower_ext(path).as_deref() {
-        Some("flac") => "FLAC",
-        Some("wav" | "wave") => "WAV",
-        Some("aif" | "aiff" | "aifc") => "AIFF",
-        Some("alac" | "m4a" | "mp4") => "ALAC/MP4",
-        Some("caf") => "CAF",
-        Some("ogg" | "oga") => "OGG",
-        Some("mp3") => "MP3",
-        Some("aac") => "AAC",
-        Some(other) => return other.to_uppercase(),
-        None => "?",
+        Some("flac") => "FLAC".to_string(),
+        Some("wav" | "wave") => "WAV".to_string(),
+        Some("aif" | "aiff" | "aifc") => "AIFF".to_string(),
+        Some("alac" | "m4a" | "mp4") => match codec {
+            Some("ALAC") | None => "ALAC/MP4".to_string(),
+            Some(other) => format!("{other}/MP4"),
+        },
+        Some("caf") => "CAF".to_string(),
+        Some("ogg" | "oga") => "OGG".to_string(),
+        Some("mp3") => "MP3".to_string(),
+        Some("aac") => "AAC".to_string(),
+        Some(other) => other.to_uppercase(),
+        None => "?".to_string(),
     }
-    .to_string()
+}
+
+/// Human-readable codec name for containers that can hold more than one —
+/// an M4A/MP4 might be ALAC or AAC, an OGG might be Vorbis or Opus, and the
+/// container name alone can't tell those apart (see
+/// [`crate::types::FileAnalysis::codec`] and [`format_label`], above, which
+/// both use this). `None` for anything not in this list, which just means
+/// the caller falls back to a container-only label; it is never wrong, only
+/// sometimes less specific.
+pub(super) fn codec_label(codec: CodecType) -> Option<&'static str> {
+    Some(match codec {
+        CODEC_TYPE_AAC => "AAC",
+        CODEC_TYPE_ALAC => "ALAC",
+        CODEC_TYPE_FLAC => "FLAC",
+        CODEC_TYPE_MP1 => "MP1",
+        CODEC_TYPE_MP2 => "MP2",
+        CODEC_TYPE_MP3 => "MP3",
+        CODEC_TYPE_OPUS => "Opus",
+        CODEC_TYPE_VORBIS => "Vorbis",
+        CODEC_TYPE_PCM_S8
+        | CODEC_TYPE_PCM_U8
+        | CODEC_TYPE_PCM_S16LE
+        | CODEC_TYPE_PCM_S16BE
+        | CODEC_TYPE_PCM_S24LE
+        | CODEC_TYPE_PCM_S24BE
+        | CODEC_TYPE_PCM_S32LE
+        | CODEC_TYPE_PCM_S32BE
+        | CODEC_TYPE_PCM_F32LE
+        | CODEC_TYPE_PCM_F32BE
+        | CODEC_TYPE_PCM_F64LE
+        | CODEC_TYPE_PCM_F64BE => "PCM",
+        _ => return None,
+    })
 }
 
 fn lower_ext(path: &Path) -> Option<String> {
@@ -186,9 +240,22 @@ mod tests {
 
     #[test]
     fn format_label_falls_back_to_the_extension() {
-        assert_eq!(format_label(Path::new("a.flac")), "FLAC");
-        assert_eq!(format_label(Path::new("a.m4a")), "ALAC/MP4");
-        assert_eq!(format_label(Path::new("a.weird")), "WEIRD");
-        assert_eq!(format_label(Path::new("noext")), "?");
+        assert_eq!(format_label(Path::new("a.flac"), None), "FLAC");
+        assert_eq!(format_label(Path::new("a.weird"), None), "WEIRD");
+        assert_eq!(format_label(Path::new("noext"), None), "?");
+    }
+
+    /// The one extension `format_label` treats specially: an `.m4a`/`.mp4`
+    /// reads "ALAC/MP4" when the codec is ALAC or unresolved (the old,
+    /// extension-only behaviour), but must say "AAC/MP4" — not "ALAC/MP4" —
+    /// once the real codec says AAC, since that's a lossy file, not a
+    /// lossless one, and this app exists to catch exactly that kind of
+    /// mislabeling.
+    #[test]
+    fn mp4_format_label_follows_the_real_codec() {
+        assert_eq!(format_label(Path::new("a.m4a"), None), "ALAC/MP4");
+        assert_eq!(format_label(Path::new("a.m4a"), Some("ALAC")), "ALAC/MP4");
+        assert_eq!(format_label(Path::new("a.m4a"), Some("AAC")), "AAC/MP4");
+        assert_eq!(format_label(Path::new("a.mp4"), Some("AAC")), "AAC/MP4");
     }
 }

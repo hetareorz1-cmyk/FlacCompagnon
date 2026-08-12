@@ -92,6 +92,7 @@ pub fn decode_and_analyze_dsd(
 
     Ok(DecodeOutcome {
         format: "DSD".to_string(),
+        codec: None, // container already says everything this field would
         sample_rate: decoded_rate,
         channels,
         declared_bits: None, // 1-bit stream; PCM bit depth does not apply

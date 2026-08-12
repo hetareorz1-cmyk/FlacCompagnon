@@ -45,6 +45,12 @@ pub use stream::decode_and_analyze;
 pub struct DecodeOutcome {
     /// Human-readable format label (e.g. "FLAC", "DSF").
     pub format: String,
+    /// The codec inside `format`, when Symphonia can name it and it isn't
+    /// just repeating `format` — see [`crate::types::FileAnalysis::codec`].
+    /// Only the generic Symphonia path ([`stream::decode_and_analyze`])
+    /// populates this; FLAC's fused path and the DSD/ffmpeg path leave it
+    /// `None`.
+    pub codec: Option<String>,
     /// Sample rate actually decoded, in Hz.
     pub sample_rate: u32,
     /// Channel count actually decoded.

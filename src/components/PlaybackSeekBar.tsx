@@ -18,6 +18,18 @@ import { fmtDuration } from "../format";
 import { IconButton } from "./IconButton";
 import "./PlaybackSeekBar.css";
 
+const SHOW_REMAINING_KEY = "playbackShowRemaining";
+
+// Same wrapped-localStorage pattern as useTheme.ts/useColumnPrefs.ts: a
+// webview with storage disabled would otherwise throw on startup.
+function storedShowRemaining(): boolean {
+  try {
+    return localStorage.getItem(SHOW_REMAINING_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export interface PlaybackSeekBarProps {
   /// Seconds into the current track — meaningless (and the bar disabled)
   /// while `duration` is `null`.
@@ -59,8 +71,18 @@ export function PlaybackSeekBar({
   const seekDragging = useRef(false);
   const disabled = duration == null || duration <= 0;
   // Persists across tracks (not reset on load) — most players treat this as a
-  // standing display preference, not a per-track toggle.
-  const [showRemaining, setShowRemaining] = useState(false);
+  // standing display preference, not a per-track toggle — and now across
+  // restarts too, same as the column order (useColumnPrefs.ts) and the
+  // theme (useTheme.ts).
+  const [showRemaining, setShowRemaining] = useState(storedShowRemaining);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SHOW_REMAINING_KEY, showRemaining ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [showRemaining]);
 
   const volumeTrackRef = useRef<HTMLDivElement>(null);
   const volumeDragging = useRef(false);

@@ -62,9 +62,19 @@ pub struct FileAnalysis {
     /// File name alone, without its directory (kept alongside `path` since
     /// most UI surfaces show only this).
     pub file_name: String,
-    /// Container/codec short name detected from the file's magic bytes
-    /// (e.g. "FLAC", "WAV", "MP4"), independent of the file extension.
+    /// Container short name detected from the file's magic bytes (e.g.
+    /// "FLAC", "WAV", "MP4"), independent of the file extension.
     pub format: String,
+    /// The codec actually carried inside `format`, when that distinction
+    /// means something — an MP4 container can hold ALAC or AAC, an OGG can
+    /// hold Vorbis or Opus, and `format` alone can't tell those apart. `None`
+    /// for single-codec containers (FLAC, DSD) where it would just repeat
+    /// `format`, and for codecs the decode path doesn't identify by name
+    /// (only the generic Symphonia path populates this; FLAC's fused path and
+    /// the DSD/ffmpeg path leave it `None` since their container already says
+    /// everything this field would).
+    #[serde(default)]
+    pub codec: Option<String>,
     /// `true` when the real container disagrees with the file extension
     /// (e.g. a WAV renamed to `.mp3`).
     pub ext_mismatch: bool,
@@ -85,6 +95,19 @@ pub struct FileAnalysis {
     /// loadable: they simply come back with a size of 0.
     #[serde(default)]
     pub size_bytes: u64,
+    /// Average bitrate in kbps, computed as `size_bytes * 8 / duration_secs`
+    /// — the same "overall bit rate" a tool like MediaInfo reports, container
+    /// overhead included, rather than the codec's own internal figure (which
+    /// Symphonia doesn't expose uniformly across formats anyway). `None`
+    /// when the duration isn't known (e.g. analysis failed before decoding).
+    #[serde(default)]
+    pub bitrate_kbps: Option<u32>,
+    /// Filesystem modification time, as a Unix timestamp (seconds since the
+    /// epoch) — read alongside `size_bytes`, from the same `fs::metadata`
+    /// call. `None` if the file's metadata couldn't be read, or the platform
+    /// doesn't report a modification time.
+    #[serde(default)]
+    pub modified_unix: Option<i64>,
 
     /// The three LAC-style detections (upscaling / upsampling / transcoding).
     pub detections: crate::detections::Detections,

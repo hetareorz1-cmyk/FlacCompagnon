@@ -16,7 +16,7 @@ use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 
-use super::container::format_label;
+use super::container::{codec_label, format_label};
 use crate::AnalysisError;
 
 /// A probed file: its reader, positioned before the first packet, and the
@@ -135,6 +135,7 @@ pub struct BasicInfo {
 /// decode). Used e.g. to caption spectrogram images.
 pub fn probe_info(path: &Path) -> Result<BasicInfo, AnalysisError> {
     let probed = probe(path, false)?;
+    let codec = codec_label(probed.params.codec);
     Ok(BasicInfo {
         // Unlike the decode paths, a missing rate or channel count is not
         // fatal here: this only captions an image, and "0" is a better answer
@@ -142,6 +143,6 @@ pub fn probe_info(path: &Path) -> Result<BasicInfo, AnalysisError> {
         sample_rate: probed.params.sample_rate.unwrap_or(0),
         channels: probed.params.channels.map(|c| c.count()).unwrap_or(0),
         bits: probed.params.bits_per_sample,
-        format: format_label(path),
+        format: format_label(path, codec),
     })
 }

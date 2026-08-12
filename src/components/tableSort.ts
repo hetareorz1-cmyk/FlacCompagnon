@@ -15,11 +15,14 @@ import type { FileAnalysis } from "../types";
 export type SortColumn =
   | "file"
   | "format"
+  | "codec"
   | "badge"
   | "rate"
   | "bits"
   | "realBits"
+  | "bitrate"
   | "length"
+  | "modified"
   | "size"
   | "detections"
   | "cutoff"
@@ -88,6 +91,8 @@ function sortValue(f: FileAnalysis, col: SortColumn): string | number | null {
       return f.file_name.toLowerCase();
     case "format":
       return f.format.toLowerCase();
+    case "codec":
+      return f.codec?.toLowerCase() ?? null;
     case "badge":
       return f.badge?.toLowerCase() ?? null;
     case "rate":
@@ -96,8 +101,12 @@ function sortValue(f: FileAnalysis, col: SortColumn): string | number | null {
       return f.declared_bits;
     case "realBits":
       return f.real_bit_depth;
+    case "bitrate":
+      return f.bitrate_kbps;
     case "length":
       return f.duration_secs;
+    case "modified":
+      return f.modified_unix;
     case "size":
       return f.size_bytes;
     case "detections":

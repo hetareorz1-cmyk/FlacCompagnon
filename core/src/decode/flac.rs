@@ -111,6 +111,7 @@ pub fn decode_and_analyze_flac(
     Ok((
         DecodeOutcome {
             format: "FLAC".to_string(),
+            codec: None, // container already says everything this field would
             sample_rate,
             channels,
             declared_bits: Some(bits),
