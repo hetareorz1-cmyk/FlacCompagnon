@@ -20,11 +20,14 @@
 //! * [`types`] — the shapes that cross the crate boundary, mirrored by the
 //!   frontend's `src/types.ts` and by the saved JSON report.
 //! * [`decode`] — one module per decode path.
-//! * [`analyzer`] — the single streaming pass that produces every measurement.
-//! * [`detections`] — measurements in, verdict out.
+//! * [`analysis`] — the whole measuring-and-deciding chain: the streaming
+//!   pass, one module per metric, the AAC-grid search, and the verdict logic.
+//!   Nothing outside the crate reaches into it; what leaves is the result.
 //! * [`convert`] — re-encodes files to another format (FLAC/Opus/MP3/WAV);
 //!   the one place in this crate that writes audio files rather than only
 //!   reading them — see that module's own doc comment for why.
+//! * [`report`] and [`playlist`] — writing results out (CSV/JSON, M3U). They
+//!   sit beside `analysis` rather than inside it: exporting is not measuring.
 //!
 //! # Example
 //!
@@ -75,29 +78,19 @@
 // an otherwise-green build red on CI while someone is mid-refactor.
 #![warn(missing_docs)]
 
-pub mod analyzer;
-pub mod bitdepth;
-pub mod clipping;
+pub mod analysis;
 pub mod convert;
 pub mod decode;
-pub mod detections;
 pub mod dsd;
-pub mod flac_md5;
-pub mod mdct;
 pub mod pipeline;
 pub mod playlist;
 pub mod report;
-pub mod requant;
 pub mod scan;
-pub mod spectrum;
-pub mod stereo;
 pub mod tags;
-pub mod truepeak;
 pub mod types;
 
-pub use decode::{probe_info, BasicInfo};
-pub use detections::{Detections, TranscodeState};
-pub use flac_md5::FlacMd5Status;
+pub use analysis::detections::{Detections, TranscodeState};
+pub use decode::{probe_info, BasicInfo, FlacMd5Status};
 pub use pipeline::analyze_file;
 pub use scan::{analyze_folder, is_supported_audio, list_audio_files, SUPPORTED_EXTENSIONS};
 pub use types::{AnalysisError, ClippingInfo, FileAnalysis, FolderReport, ScanOptions};

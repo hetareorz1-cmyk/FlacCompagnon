@@ -188,7 +188,7 @@ fn opt_bool(v: Option<bool>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::detections::{Detections, TranscodeState};
+    use crate::analysis::detections::{Detections, TranscodeState};
     use crate::{ClippingInfo, FileAnalysis};
 
     fn sample_file() -> FileAnalysis {

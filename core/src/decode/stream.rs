@@ -13,7 +13,7 @@ use symphonia::core::errors::Error as SymError;
 use super::container::{codec_label, format_label};
 use super::probe::{probe, InterleavedBuf};
 use super::DecodeOutcome;
-use crate::analyzer::StreamAnalyzer;
+use crate::analysis::analyzer::StreamAnalyzer;
 use crate::AnalysisError;
 
 /// Decode `path` and run streaming analysis over its samples.

@@ -15,7 +15,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::analyzer::AnalysisSummary;
+use super::analyzer::AnalysisSummary;
 
 /// Outcome of the transcoding test.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -111,7 +111,7 @@ pub fn classify(
     // real transcodes ≥ 0.28 across 128–320 kbps; λ = DETECT_RATE = 0.25).
     let requant = summary
         .requant_rate
-        .map(|r| r >= crate::requant::DETECT_RATE)
+        .map(|r| r >= super::requant::DETECT_RATE)
         .unwrap_or(false);
     let mdct_cutoff_hz = summary
         .mdct_cutoff_ratio

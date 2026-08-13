@@ -5,7 +5,9 @@
 //! threshold λ. Validated against a bit-exact Python replica of the detector
 //! (toy transcode → likelihood 1.0 at onset 0; genuine noise → ≈ 0.10).
 
-use flaccompagnon_core::requant::{analyze_segment, kbd_window, Mdct, DETECT_RATE, L, N, SEGMENT_LEN, SWB_4448};
+use flaccompagnon_core::analysis::requant::{
+    analyze_segment, kbd_window, Mdct, DETECT_RATE, L, N, SEGMENT_LEN, SWB_4448,
+};
 
 /// Deterministic noise in [-1, 1).
 struct Lcg(u64);

@@ -12,7 +12,7 @@
 use std::path::Path;
 
 use crate::decode;
-use crate::detections::{Detections, TranscodeState};
+use crate::analysis::detections::{Detections, TranscodeState};
 use crate::dsd as dsd_format;
 use crate::types::{FileAnalysis, ScanOptions};
 

@@ -12,8 +12,8 @@ use std::path::Path;
 use md5::{Digest, Md5};
 
 use super::DecodeOutcome;
-use crate::analyzer::StreamAnalyzer;
-use crate::flac_md5::FlacMd5Status;
+use crate::analysis::analyzer::StreamAnalyzer;
+use super::FlacMd5Status;
 use crate::AnalysisError;
 
 /// Fused single-pass FLAC decode.

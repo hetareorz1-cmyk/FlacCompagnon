@@ -11,7 +11,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 use super::DecodeOutcome;
-use crate::analyzer::StreamAnalyzer;
+use crate::analysis::analyzer::StreamAnalyzer;
 use crate::AnalysisError;
 
 /// Read size for ffmpeg's stdout. Large enough that the pipe is rarely the

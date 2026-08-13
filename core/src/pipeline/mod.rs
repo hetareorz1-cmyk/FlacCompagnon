@@ -2,8 +2,8 @@
 //! analyzer over it, and turn the raw measurements into a verdict.
 //!
 //! This is the orchestration layer. Every measurement it uses comes from
-//! elsewhere ([`analyzer`](crate::analyzer) and the per-metric modules), and
-//! the verdict logic lives in [`detections`](crate::detections) — what happens
+//! elsewhere ([`analyzer`](crate::analysis::analyzer) and the per-metric modules), and
+//! the verdict logic lives in [`detections`](crate::analysis::detections) — what happens
 //! here is choosing *which* path a file takes and assembling the result.
 //!
 //! This file holds the PCM path (FLAC's fused pass, or the generic Symphonia
@@ -18,9 +18,9 @@ mod dsd;
 use std::path::Path;
 
 use crate::decode;
-use crate::detections::{self, Detections, TranscodeState};
+use crate::analysis::detections::{self, Detections, TranscodeState};
 use crate::dsd as dsd_format;
-use crate::flac_md5::FlacMd5Status;
+use crate::decode::FlacMd5Status;
 use crate::types::{ClippingInfo, FileAnalysis, ScanOptions};
 
 /// Analyze a single audio file end-to-end.

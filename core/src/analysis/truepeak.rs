@@ -50,7 +50,7 @@ struct Channel {
 /// exceeds full scale even though no stored sample does.
 ///
 /// ```
-/// use flaccompagnon_core::truepeak::TruePeak;
+/// use flaccompagnon_core::analysis::truepeak::TruePeak;
 ///
 /// // A quarter-rate sine sampled at its zero-crossing offset: every stored
 /// // sample sits at ±0.693, but the real crest between them is 0.98.

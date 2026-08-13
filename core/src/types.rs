@@ -110,7 +110,7 @@ pub struct FileAnalysis {
     pub modified_unix: Option<i64>,
 
     /// The three LAC-style detections (upscaling / upsampling / transcoding).
-    pub detections: crate::detections::Detections,
+    pub detections: crate::analysis::detections::Detections,
     /// Detected spectral cutoff frequency in Hz.
     pub cutoff_hz: Option<f64>,
     /// Cutoff frequency as a ratio of Nyquist (cutoff / (sample_rate/2)).
@@ -136,7 +136,7 @@ pub struct FileAnalysis {
     pub dr_db: Option<f32>,
 
     /// FLAC MD5 signature status. `None` for non-FLAC files (no column shown).
-    pub flac_md5: Option<crate::flac_md5::FlacMd5Status>,
+    pub flac_md5: Option<crate::decode::FlacMd5Status>,
 
     /// Populated when analysis failed; other fields hold best-effort defaults.
     pub error: Option<String>,

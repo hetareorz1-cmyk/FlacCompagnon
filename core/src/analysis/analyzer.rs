@@ -15,9 +15,9 @@
 //! # Size
 //!
 //! Over CLAUDE.md's 300-line ceiling, deliberately. Each metric already lives
-//! in its own module ([`spectrum`](crate::spectrum),
-//! [`clipping`](crate::clipping), [`stereo`](crate::stereo),
-//! [`bitdepth`](crate::bitdepth), [`mdct`](crate::mdct)); what is left here is
+//! in its own module ([`spectrum`](super::spectrum),
+//! [`clipping`](super::clipping), [`stereo`](super::stereo),
+//! [`bitdepth`](super::bitdepth), [`mdct`](super::mdct)); what is left here is
 //! the single hot loop that feeds them all from one pass over the samples,
 //! plus the state that loop carries. That single pass *is* the design — the
 //! whole reason this type exists rather than five independent analyzers is
@@ -29,9 +29,10 @@ use std::sync::Arc;
 
 use rustfft::{num_complex::Complex, Fft, FftPlanner};
 
-use crate::mdct::{Mdct, AAC_N};
-use crate::truepeak::TruePeak;
-use crate::{bitdepth, clipping, requant, spectrum, ClippingInfo};
+use super::mdct::{Mdct, AAC_N};
+use super::truepeak::TruePeak;
+use super::{bitdepth, clipping, requant, spectrum};
+use crate::ClippingInfo;
 
 /// Full-scale detection threshold (normalized). Samples with |value| at or
 /// above this are treated as clipped.
@@ -426,7 +427,7 @@ impl StreamAnalyzer {
         };
 
         let fake_stereo = if self.channels >= 2 {
-            crate::stereo::is_fake(
+            super::stereo::is_fake(
                 self.diff_energy,
                 self.l_energy,
                 self.r_energy,

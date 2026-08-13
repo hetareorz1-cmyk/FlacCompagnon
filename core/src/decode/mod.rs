@@ -7,6 +7,10 @@
 //!   the samples are streamed into a [`StreamAnalyzer`], never held whole.
 //! * [`flac`] — FLAC's fused path: one pass that feeds the analyzer *and*
 //!   computes the STREAMINFO MD5 over the exact original integers.
+//! * [`flac_md5`] — the verdict that pass produces ([`FlacMd5Status`]). It
+//!   lives here rather than under `analysis/` because this is where it is
+//!   decided: the MD5 comparison is part of the FLAC decode, by design, so
+//!   the file is read once for both the hash and the measurements.
 //! * [`dsd`] — DSD (DSF/DFF), which Symphonia cannot decode; ffmpeg converts
 //!   the 1-bit stream to PCM and we analyze that.
 //! * [`playback`] — decoding for the preview player rather than for analysis:
@@ -22,20 +26,22 @@
 //! represents every integer up to 2^24 exactly) and fed to the bit-depth
 //! estimator alongside.
 //!
-//! [`StreamAnalyzer`]: crate::analyzer::StreamAnalyzer
+//! [`StreamAnalyzer`]: crate::analysis::analyzer::StreamAnalyzer
 
 pub mod container;
 pub mod dsd;
 pub mod flac;
+pub mod flac_md5;
 pub mod playback;
 pub mod probe;
 pub mod stream;
 
-use crate::analyzer::StreamAnalyzer;
+use crate::analysis::analyzer::StreamAnalyzer;
 
 pub use container::{detect_container, ext_canonical};
 pub use dsd::decode_and_analyze_dsd;
 pub use flac::decode_and_analyze_flac;
+pub use flac_md5::FlacMd5Status;
 pub use playback::{decode_to_pcm, PcmAudio, PcmStreamDecoder};
 pub use probe::{probe_info, BasicInfo};
 pub use stream::decode_and_analyze;
