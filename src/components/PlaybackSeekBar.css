@@ -32,12 +32,15 @@
      in the row, not sized for this one. */
   margin-right: 16px;
 }
-/* Always takes up its full width — unlike an earlier version that animated
-   width from 0, which shrank the seek track by that same amount while
-   hovering (the two share the same flex row) and shifted it back the moment
-   the mouse left. Only opacity changes now, so nothing else in the footer
-   ever moves. It reveals on hovering the slider itself, not the icon or the
-   row as a whole, so muting via the icon can't also flash the slider open. */
+/* Always visible now. It used to sit at `opacity: 0` and reveal on hover,
+   which made sense when the volume icon lived elsewhere in the footer and the
+   slider was an incidental extra. Once the icon moved next to it, that became
+   a control with no affordance: nothing on screen said a volume slider was
+   there to be found. A permanently visible control is discoverable; a hidden
+   one is only usable by someone who already knows.
+   (It has always taken up its full width — an even earlier version animated
+   width from 0, which shrank the seek track by the same amount while hovering
+   and snapped it back on leave, since the two share this flex row.) */
 .playback-volume-slider {
   /* Narrowed from 72px — this and `.volume-track` below being this wide was
      most of what pushed `.playback-seekbar`'s own floor (see its comment)
@@ -49,12 +52,6 @@
      others, and without this gap its own edge reads as overlapping the
      track that starts right after it. */
   margin-left: 8px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-.playback-volume-slider:hover,
-.playback-volume-slider:focus-within {
-  opacity: 1;
 }
 /* Sizing override for the volume track — same `.playback-track` visuals
    (line, fill, head) as the seek bar below, see that rule for why this isn't
@@ -65,6 +62,30 @@
   width: 46px;
   max-width: none;
   min-width: 0;
+}
+/* Neutral rather than accent, now that both bars are on screen at once. This
+   is not only about visual noise: the two mean different things. The seek bar
+   reports something that is *happening* — it moves on its own, and it is what
+   the eye should be drawn to. The volume is a *setting*: it only ever moves
+   because the user moved it. Painting both in the accent made them read as
+   equally important. Accent stays reserved for playback position; the volume
+   speaks in the neutral family.
+   `--muted` is borrowed from the text scale, which is a reuse of the token's
+   intent (de-emphasis) rather than of its meaning — unlike, say, repurposing
+   a status colour, it doesn't break a mapping the user has learned. */
+.volume-track .playback-track-fill,
+.volume-track .playback-track-head {
+  background: var(--muted);
+  transition: background 0.15s ease;
+}
+/* Brightening within the same neutral family on hover/focus, rather than
+   flipping to the accent: it says "this responds" without borrowing the
+   colour that means "playback position" for the duration of the hover. */
+.volume-track:hover .playback-track-fill,
+.volume-track:hover .playback-track-head,
+.volume-track:focus-visible .playback-track-fill,
+.volume-track:focus-visible .playback-track-head {
+  background: var(--text);
 }
 
 .playback-time {
