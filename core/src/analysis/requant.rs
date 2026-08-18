@@ -17,7 +17,7 @@
 //!    128-coefficient sub-blocks of an EIGHT_SHORT_SEQUENCE frame (encoders
 //!    switch to short blocks on transients; those frames are invisible to a
 //!    long-window analysis);
-//! 3. sweeps, per band, [`NSF`] candidate scalefactors across the plausible
+//! 3. sweeps, per band, `NSF` candidate scalefactors across the plausible
 //!    range `δ ∈ [0.3, 0.7]` of the dead-zone bound `φdz = 16/3 + 4·log2(max|X|)`
 //!    (eq. 2; 90% of real encoder scalefactors land in that window), computes
 //!    the rounding-error energy `E(s) = Σ ε²` and flags the band when

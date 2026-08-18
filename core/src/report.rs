@@ -117,7 +117,7 @@ pub fn write_csv(dest: &Path, report: &FolderReport) -> std::io::Result<()> {
 }
 
 /// Build the JSON text for a folder report (pretty-printed, wrapped with a
-/// format marker and version — see [`JsonReport`]).
+/// format marker and version — see `JsonReport`).
 pub fn build_json(report: &FolderReport) -> serde_json::Result<String> {
     let wrapped = JsonReport {
         format: JSON_FORMAT_MARKER.to_string(),

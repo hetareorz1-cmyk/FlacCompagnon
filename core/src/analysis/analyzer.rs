@@ -15,10 +15,9 @@
 //! # Size
 //!
 //! Over CLAUDE.md's 300-line ceiling, deliberately. Each metric already lives
-//! in its own module ([`spectrum`](super::spectrum),
-//! [`clipping`](super::clipping), [`stereo`](super::stereo),
-//! [`bitdepth`](super::bitdepth), [`mdct`](super::mdct)); what is left here is
-//! the single hot loop that feeds them all from one pass over the samples,
+//! in its own module ([`spectrum`], [`clipping`], [`stereo`](super::stereo),
+//! [`bitdepth`], [`mdct`](super::mdct)); what is left here is the single hot
+//! loop that feeds them all from one pass over the samples,
 //! plus the state that loop carries. That single pass *is* the design — the
 //! whole reason this type exists rather than five independent analyzers is
 //! that an album must be read once, not five times. Splitting the loop would

@@ -4,7 +4,7 @@
 //! the container, take the default track, pull the sample rate and channel
 //! count off its codec parameters — and had four copies of them, which is how
 //! they had already started to drift apart (only one of them disabled gapless
-//! playback, for no stated reason). [`ProbedTrack`] is that step, once.
+//! playback, for no stated reason). `ProbedTrack` is that step, once.
 
 use std::fs::File;
 use std::path::Path;

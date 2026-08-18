@@ -3,7 +3,8 @@
 //! Everything here is internal machinery — no module in this folder is
 //! referenced from outside the crate, which is what made it possible to group
 //! them without touching a single caller. What crosses the crate boundary is
-//! the *result* ([`crate::types`], [`Detections`]), not the measuring.
+//! the *result* ([`crate::types`], [`detections::Detections`]), not the
+//! measuring.
 //!
 //! These nine modules were top-level files next to `report.rs`, `playlist.rs`
 //! and `scan.rs`, which made the crate root read as a flat pile where the

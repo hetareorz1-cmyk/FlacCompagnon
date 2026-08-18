@@ -64,7 +64,7 @@ pub struct AddableTag {
     pub label: String,
 }
 
-/// [`ADDABLE_KEYS`] resolved against `path`'s tag type and filtered to the
+/// `ADDABLE_KEYS` resolved against `path`'s tag type and filtered to the
 /// ones that format actually supports (`ItemKey::map_key` returns `None`
 /// for a variant with no mapping in that scheme) — so the picker only ever
 /// offers a tag that can actually be written to the file(s) at hand. The

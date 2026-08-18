@@ -5,7 +5,7 @@
 //! everything about the image itself (mapping a role name to lofty's
 //! [`PictureType`], extracting the picture on read, replacing it on write).
 //!
-//! [`extract`] and [`apply_edit`] are the two entry points the parent module
+//! `extract` and `apply_edit` are the two entry points the parent module
 //! calls from [`super::read_tags`]/[`super::write_tags`]; everything else
 //! here is either a public type shared with the frontend or a private
 //! implementation detail.
@@ -43,8 +43,8 @@ pub struct CoverArt {
 /// Cover art edit instruction — same three-way shape as [`super::FieldEdit`],
 /// plus the image payload for `Set`. `picture_type` is the role to write it
 /// under (`"CoverFront"`, `"CoverBack"`, …, matching the strings
-/// [`extract`] surfaces via [`CoverArt::picture_type`]) — see
-/// [`parse_picture_type`] for how an unrecognized string is handled.
+/// `extract` surfaces via [`CoverArt::picture_type`]) — see
+/// `parse_picture_type` for how an unrecognized string is handled.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub enum CoverEdit {
     /// Leave the cover alone.
@@ -58,7 +58,7 @@ pub enum CoverEdit {
         mime: String,
         /// Replacement image bytes, base64-encoded.
         data_base64: String,
-        /// Role to write the image under (see [`parse_picture_type`]).
+        /// Role to write the image under (see `parse_picture_type`).
         picture_type: String,
     },
 }

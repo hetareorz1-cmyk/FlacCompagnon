@@ -17,9 +17,9 @@
 //! ## Format choice
 //!
 //! All four targets are free to depend on: FLAC via a pure-Rust encoder
-//! ([`flac`], crate `flacenc`, no C toolchain at all), WAV via plain PCM
-//! muxing ([`wav`], crate `hound`), and Opus/MP3 ([`opus`], [`mp3`]) via
-//! crates that vendor their respective C codec (`libopus`, LAME) from source
+//! (`flac`, crate `flacenc`, no C toolchain at all), WAV via plain PCM muxing
+//! (`wav`, crate `hound`), and Opus/MP3 (`opus`, `mp3`) via crates that
+//! vendor their respective C codec (`libopus`, LAME) from source
 //! rather than linking a system library — so a built binary has no runtime
 //! dependency to install. *Building* is a different matter, and this comment
 //! used to get it wrong: `audiopus_sys` 0.1.x (what `audiopus` 0.2 pins)
@@ -34,15 +34,15 @@
 //!
 //! ## Module layout
 //!
-//! One file per encoder ([`flac`], [`wav`], [`opus`], [`mp3`]), because each
-//! wraps a different codec crate with essentially nothing in common. What's
+//! One file per encoder (`flac`, `wav`, `opus`, `mp3`), because each wraps a
+//! different codec crate with essentially nothing in common. What's
 //! shared — deciding *where* converted files go, not *how* they're encoded —
 //! lives here: [`convert_file`] dispatches to the right encoder for one file,
 //! [`plan_batch`] works out every destination path up front (mirroring the
 //! source folder structure under a new root), and [`passthrough_files`]
 //! copies everything else in that source folder verbatim. Two neighbours sit
-//! beside them for reasons of their own: [`pcm`] (sample reshaping shared by
-//! the encoders) and [`cleanup`] (removing what a cancelled batch already
+//! beside them for reasons of their own: `pcm` (sample reshaping shared by
+//! the encoders) and `cleanup` (removing what a cancelled batch already
 //! wrote).
 
 mod cleanup;
