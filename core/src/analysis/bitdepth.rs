@@ -38,6 +38,12 @@ pub fn is_fake_hires(declared: u32, or_mask: u32) -> bool {
 mod tests {
     use super::*;
 
+    // The underscore in each literal below sits at the padding boundary, not
+    // every four digits: `0x1234_00` reads as "the 16-bit sample 0x1234,
+    // shifted into a 24-bit field, low byte zero", which is the whole point of
+    // this test. Clippy's suggested regrouping (`0x0012_3400`) is uniform but
+    // says nothing, so the lint is turned off here rather than obeyed.
+    #[allow(clippy::unusual_byte_groupings)]
     #[test]
     fn sixteen_bit_padded_to_24_is_flagged() {
         // 16-bit samples left-shifted into a 24-bit field => low 8 bits zero.

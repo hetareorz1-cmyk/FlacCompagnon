@@ -177,7 +177,10 @@ mod tests {
         let outside = dir.path().join("elsewhere/keep.flac");
         touch(&outside);
 
-        assert_eq!(undo_batch(&[outside.clone()], &HashSet::new(), &root), 0);
+        assert_eq!(
+            undo_batch(std::slice::from_ref(&outside), &HashSet::new(), &root),
+            0
+        );
         assert!(outside.exists());
     }
 }

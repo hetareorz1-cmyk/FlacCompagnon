@@ -48,8 +48,29 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Core unit + integration tests
-        run: cargo test -p flaccompagnon-core --verbose
+      # `--workspace`, not `-p flaccompagnon-core`: the Tauri crate has unit
+      # tests of its own (path validation in `commands/rename.rs`, the worker
+      # pool in `commands/batch.rs`, `common_root` in `commands/convert.rs`)
+      # and none of them had ever run on CI — `cargo build` doesn't even
+      # compile `#[cfg(test)]` code, so they were only ever exercised on the
+      # maintainer's machine.
+      - name: Unit + integration tests (whole workspace)
+        run: cargo test --workspace --verbose
+
+      # CLAUDE.md requires clippy to be clean, warnings included — but nothing
+      # enforced it here, so the rule rested entirely on remembering to run it.
+      # `--all-targets` matters as much as the step itself: plain `cargo
+      # clippy` skips everything under `#[cfg(test)]`, which in a repo that
+      # asks for thorough tests is a large blind spot.
+      #
+      # `-D warnings` makes this blocking, which is the point. The cost to know
+      # about: the toolchain above floats on stable, so a new Rust release can
+      # introduce a lint that reddens an untouched file. When that happens the
+      # fix is to address the lint or, if it is genuinely wrong for the code in
+      # question, a scoped `#[allow]` with a comment — never to quietly drop
+      # this flag.
+      - name: Lints (clippy, tests included)
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Build frontend (typecheck + bundle)
         run: npm run build
