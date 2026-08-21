@@ -18,6 +18,10 @@ export interface ConvertDropzoneProps {
   /// A file is being dragged over this box specifically (not just the
   /// window) — see useNativeDrop's `overConvert`.
   dragOver: boolean;
+  /// A dropped folder is being walked for the audio files it holds. Short for
+  /// an album, long enough to notice for a deep tree — and until it finishes
+  /// the list is unchanged, which without this reads as a drop that missed.
+  importing: boolean;
   /// A conversion batch is running — swaps the prompt for a spinner and
   /// per-file progress text, the "animation" requested for this state.
   busy: boolean;
@@ -27,6 +31,7 @@ export interface ConvertDropzoneProps {
 
 export function ConvertDropzone({
   dragOver,
+  importing,
   busy,
   progressLabel,
   itemCount,
@@ -35,7 +40,15 @@ export function ConvertDropzone({
 
   return (
     <div className={frameClass} {...dropZone("convert")}>
-      {busy ? (
+      {/* Checked before `busy`: the two can't overlap (the app is frozen for
+          the length of a conversion, so nothing can be dropped then), and
+          importing is the shorter-lived of the two. */}
+      {importing ? (
+        <>
+          <span className="spinner" />
+          <p className="convert-drop-text">Looking for audio files…</p>
+        </>
+      ) : busy ? (
         <>
           <span className="spinner" />
           <p className="convert-drop-text">{progressLabel}</p>

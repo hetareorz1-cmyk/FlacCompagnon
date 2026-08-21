@@ -40,6 +40,8 @@ export interface ConvertPanelProps {
   format: ConvertFormat;
   bitrateKbps: number | null;
   copyOthers: boolean;
+  /// A dropped folder is being expanded — see ConvertDropzone's own prop.
+  importing: boolean;
   busy: boolean;
   cancelling: boolean;
   progressLabel: string;
@@ -70,6 +72,7 @@ export function ConvertPanel({
   format,
   bitrateKbps,
   copyOthers,
+  importing,
   busy,
   cancelling,
   progressLabel,
@@ -114,6 +117,7 @@ export function ConvertPanel({
 
       <ConvertDropzone
         dragOver={dragOver}
+        importing={importing}
         busy={busy}
         progressLabel={progressLabel}
         itemCount={targets.length}

@@ -28,6 +28,7 @@ export function useConvertPanel({ onToast, onBeforeStart }: UseConvertPanelArgs)
   const [format, setFormat] = useState<ConvertFormat>("flac");
   const [bitrateKbps, setBitrateKbps] = useState<number | null>(null);
   const [copyOthers, setCopyOthers] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [progressLabel, setProgressLabel] = useState("");
   const [progressPercent, setProgressPercent] = useState(0);
@@ -36,13 +37,41 @@ export function useConvertPanel({ onToast, onBeforeStart }: UseConvertPanelArgs)
   const openPanel = useCallback(() => setPanelOpen(true), []);
   const closePanel = useCallback(() => setPanelOpen(false), []);
 
-  const addTargets = useCallback((paths: string[]) => {
-    setTargets((prev) => {
-      const next = [...prev];
-      for (const p of paths) if (!next.includes(p)) next.push(p);
-      return next;
-    });
-  }, []);
+  /// Imports `paths` — audio files, folders, or a mix — into the panel's list.
+  ///
+  /// Folders are expanded by the backend first (`api.listConvertSources`)
+  /// rather than kept as one row. Keeping them whole made the panel's own
+  /// count a lie the moment a folder was dropped ("1 track imported" for an
+  /// album), and left the tracks inside it unselectable and unremovable
+  /// individually. Everything in `targets` is therefore a real file.
+  const addTargets = useCallback(
+    async (paths: string[]) => {
+      if (paths.length === 0) return;
+      // Walking a deep folder takes long enough to notice, and until it
+      // returns nothing on screen has changed — which reads as a drop the app
+      // missed. `importing` gives the drop zone something to say meanwhile.
+      setImporting(true);
+      let files: string[];
+      try {
+        files = await api.listConvertSources(paths);
+      } catch (e) {
+        onToast(String(e), "error");
+        return;
+      } finally {
+        setImporting(false);
+      }
+      if (files.length === 0) {
+        onToast("No supported audio files in what you dropped.", "error");
+        return;
+      }
+      setTargets((prev) => {
+        const next = [...prev];
+        for (const p of files) if (!next.includes(p)) next.push(p);
+        return next;
+      });
+    },
+    [onToast],
+  );
 
   const removeTarget = useCallback((path: string) => {
     setTargets((prev) => prev.filter((p) => p !== path));
@@ -132,6 +161,7 @@ export function useConvertPanel({ onToast, onBeforeStart }: UseConvertPanelArgs)
     format,
     bitrateKbps,
     copyOthers,
+    importing,
     busy,
     cancelling,
     progressLabel,

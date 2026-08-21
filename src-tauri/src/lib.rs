@@ -59,6 +59,7 @@ pub fn run() {
             commands::analysis::ffmpeg_available,
             commands::batch::cancel_task,
             commands::convert::convert_files,
+            commands::convert::list_convert_sources,
             commands::spectrograms::generate_spectrograms,
             commands::report::save_report_csv,
             commands::report::save_report_json,

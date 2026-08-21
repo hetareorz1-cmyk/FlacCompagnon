@@ -606,6 +606,7 @@ export function App() {
             format={convert.format}
             bitrateKbps={convert.bitrateKbps}
             copyOthers={convert.copyOthers}
+            importing={convert.importing}
             busy={convert.busy}
             cancelling={convert.cancelling}
             progressLabel={convert.progressLabel}
@@ -618,7 +619,7 @@ export function App() {
             onRemoveTarget={convert.removeTarget}
             onClearTargets={convert.clearTargets}
             onToggleSelected={convert.toggleSelected}
-            onAddSelected={() => convert.addTargets(selection.selectedPaths)}
+            onAddSelected={() => void convert.addTargets(selection.selectedPaths)}
             onConvert={() => void convert.convert()}
             onCancel={() => void convert.cancel()}
           />

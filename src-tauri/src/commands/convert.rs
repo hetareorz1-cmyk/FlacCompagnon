@@ -39,6 +39,32 @@ pub struct ConvertSummary {
     errors: Vec<String>,
 }
 
+/// Expand what the conversion panel was handed — any mix of audio files and
+/// folders — into the audio files it will actually convert.
+///
+/// The panel used to keep the dropped paths verbatim, which made its own
+/// count wrong the moment a folder arrived: one row reading "1 track
+/// imported" for what might hold a hundred. Resolving it here rather than
+/// guessing in the frontend has two further benefits — the list then shows
+/// exactly what will be written, and a single track inside a dropped folder
+/// can be removed like any other, which was impossible while the folder was
+/// one opaque row.
+///
+/// Recursive, and it applies the same filtering [`convert_files`] would
+/// (extension-based, generated `spectres/` folders skipped), so what the panel
+/// lists and what the batch writes cannot disagree.
+#[tauri::command]
+pub async fn list_convert_sources(targets: Vec<String>) -> Result<Vec<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        gather_targets(&targets, true)
+            .iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect()
+    })
+    .await
+    .map_err(|e| e.to_string())
+}
+
 /// Convert every audio file implied by `targets` (the panel's own imported
 /// files/folders, independent of the main results table) to `settings`'s
 /// format, writing the result under `output_root` in the same relative

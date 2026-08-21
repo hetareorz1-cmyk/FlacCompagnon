@@ -145,6 +145,12 @@ export const savePlaylist = (dest: string, entries: PlaylistEntry[], format: Pla
 // verbatim, unconverted — "tout ou rien", no per-file choice. Progress
 // arrives on the `convert://progress` event, same `Progress` shape analysis
 // and spectrogram rendering already use.
+// Expands dropped folders into the tracks they hold, so the conversion panel
+// lists (and counts) real files rather than whatever was dropped. Same walk
+// and same filtering `convert_files` performs, so the two cannot disagree.
+export const listConvertSources = (targets: string[]) =>
+  invoke<string[]>("list_convert_sources", { targets });
+
 export const convertFiles = (
   targets: string[],
   outputRoot: string,

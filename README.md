@@ -27,10 +27,10 @@ Built with **Rust** and **Tauri v2**, it compiles to a small native app for **Li
 
 FlacCompagnon runs the same three **independent** detections as the original Lossless Audio Checker. A file can trip none, one, or several; if none fire it is reported **Clean**. The **Detections** column shows a coloured tag per finding, and hovering it explains the reasoning.
 
-| Detection       | Meaning                                                                                                                                                                                                                                                                          |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Upscaling**   | Fake resolution: a ≤16-bit signal stored at 24-bit (the low bits carry no real information).                                                                                                                                                                                     |
-| **Upsampling**  | Fake sample rate: a high-rate container (e.g. 96 kHz) whose content stops sharply around the CD range (~22 kHz).                                                                                                                                                                 |
+| Detection       | Meaning                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Upscaling**   | Fake resolution: a ≤16-bit signal stored at 24-bit (the low bits carry no real information).                                                                                                                                                                                                                                                                                                                    |
+| **Upsampling**  | Fake sample rate: a high-rate container (e.g. 96 kHz) whose content stops sharply around the CD range (~22 kHz).                                                                                                                                                                                                                                                                                                |
 | **Transcoding** | Lossy source re-wrapped as lossless. Three signatures, strongest first: the **AAC re-quantization grid** (coefficients snap onto AAC's quantization grid at a synchronized MDCT alignment — near-conclusive, catches every bitrate), an MDCT-domain high-frequency dead zone, and a brick-wall spectral cut-off. Shown as _Transcoded_ (detected) or _Transcoded?_ (a gentle early roll-off that is ambiguous). |
 
 See [Detection algorithms](#detection-algorithms) below for how each works, and its limitations. Like the original, these are informed heuristics, not cryptographic proof — the spectrogram is the final arbiter.
@@ -59,16 +59,16 @@ Click **Generate spectrograms** to render a high-resolution spectrogram image fo
 
 - **Fake stereo** — detects "stereo" files that are really dual-mono (both channels identical).
 - **Clipping** — counts full-scale sample runs (each _event_ = ≥3 consecutive samples at 0 dBFS) and reports the peak level in dBFS. This flags an over-loud master; it is independent of whether the file is lossless.
-- **True peak** — a separate column reporting the **true peak in dBTP** (ITU-R BS.1770-style: the audio is 4×-oversampled through a 48-tap polyphase FIR, revealing **inter-sample peaks** — places where the waveform a DAC reconstructs overshoots full scale *between* stored samples). It is shown for every track, clipped or not: a track can read −0.6 dBTP with a perfectly clean sample-domain signal (safe headroom, no problem) or read −0.2 dBFS sample peak yet **+1 dBTP** true peak — an "inter-sample over" that the classic clipping counter never sees because no single stored sample hits full scale.
+- **True peak** — a separate column reporting the **true peak in dBTP** (ITU-R BS.1770-style: the audio is 4×-oversampled through a 48-tap polyphase FIR, revealing **inter-sample peaks** — places where the waveform a DAC reconstructs overshoots full scale _between_ stored samples). It is shown for every track, clipped or not: a track can read −0.6 dBTP with a perfectly clean sample-domain signal (safe headroom, no problem) or read −0.2 dBFS sample peak yet **+1 dBTP** true peak — an "inter-sample over" that the classic clipping counter never sees because no single stored sample hits full scale.
 - **Dynamics (DR)** — a DR-meter-style estimate of each track's dynamic range: the peak level against the RMS of the loudest 20% of ~3 s blocks (the crest factor of the loud passages). High values (≥ 12 dB, shown green) indicate a dynamic master such as a Full Dynamic Range edition; low values (< 8 dB, shown amber) betray a loudness-war master. Like clipping, this is independent of losslessness.
-- **File size** — read straight from the filesystem by the Rust core, never derived from bitrate × duration, so it matches what your file manager reports for the same file. Displayed with **decimal** units (1 kB = 1000 bytes, as macOS Finder and most Linux file managers do); hovering the cell shows the exact byte count. Note that Windows Explorer labels *binary* units "KB"/"MB", so it will show a slightly smaller number for the same file.
+- **File size** — read straight from the filesystem by the Rust core, never derived from bitrate × duration, so it matches what your file manager reports for the same file. Displayed with **decimal** units (1 kB = 1000 bytes, as macOS Finder and most Linux file managers do); hovering the cell shows the exact byte count. Note that Windows Explorer labels _binary_ units "KB"/"MB", so it will show a slightly smaller number for the same file.
 
 ### 5. Save & reload (on demand)
 
 Analysis never writes anything by itself. When you want to keep the results, click **Save…** and pick a name and location — nothing is dropped into your music folders unless you ask for it. One dialog pick writes **two files, same stem, same folder**:
 
 - a spreadsheet-friendly **`.csv`** (all columns: status, upscaling, upsampling, transcoding, cutoff, bit depth, file size, clipping, true peak, dynamics, MD5, codec, bitrate, modification time, …) — the size is exported as a raw byte count so it can be summed and sorted, and every column the table can show is present regardless of which ones are currently visible or how they're ordered on screen;
-- a **`.json`** that round-trips the *entire* analysis — every field, including the nested per-detection detail — so it can be reloaded later.
+- a **`.json`** that round-trips the _entire_ analysis — every field, including the nested per-detection detail — so it can be reloaded later.
 
 To reload a saved analysis, **drop the `.json` file onto the window**, same gesture as dropping a folder — there's no separate button for it. The table renders instantly from the file, with no audio re-decoded. This also means the export reflects exactly what's on screen: rows removed with the trash icon before saving are **not** included in either file, and won't come back on reload.
 
@@ -93,7 +93,7 @@ It picks the most precise starting point available:
 
 1. If the files already carry a **MusicBrainz Release ID** (e.g. they were tagged with Picard), it goes straight to that exact release — no guessing.
 2. Otherwise it searches using the **artist/album already in the tags**.
-3. With no usable tags at all, it *suggests* a query guessed from the **file name** (`01 - Artist - Title.flac`), shown for you to confirm rather than searched blindly.
+3. With no usable tags at all, it _suggests_ a query guessed from the **file name** (`01 - Artist - Title.flac`), shown for you to confirm rather than searched blindly.
 
 Results from both sources are listed with a source badge. Picking one shows its track list and cover; **Apply** stages the values into the tag panel’s fields — it does not write anything, so you can review or adjust before pressing **Save** as usual. With a single track selected you can also click a track in the list to fill in its title and number; with several selected, only album-level fields are offered (there is no reliable way to guess which file is which track).
 
@@ -136,7 +136,7 @@ Converting never touches your original files — it only ever writes new ones un
 
 ## Supported formats
 
-FLAC, WAV, AIFF, ALAC/MP4 (`.m4a`), CAF, OGG/Vorbis, MP3, AAC, and **DSD** (`.dsf` / `.dff`). MP3/AAC are decoded so you can compare them, though they are lossy by definition. DSD container headers are verified natively; DSD *content* analysis requires ffmpeg (DST-compressed DFF is header-only).
+FLAC, WAV, AIFF, ALAC/MP4 (`.m4a`), CAF, OGG/Vorbis, MP3, AAC, and **DSD** (`.dsf` / `.dff`). MP3/AAC are decoded so you can compare them, though they are lossy by definition. DSD container headers are verified natively; DSD _content_ analysis requires ffmpeg (DST-compressed DFF is header-only).
 
 ---
 
@@ -212,7 +212,7 @@ These mirror the three tests described by the authors of the original Lossless A
 
 The re-quantization likelihood is exported in the CSV as the `aac_grid` column (empty when the check did not run).
 
-**DSD authenticity (fake-DSD detection).** DSF/DFF headers are parsed natively (magic bytes, 1-bit rate → DSD64/128/256, channels, DST flag) — that authenticates the container exactly. The content check decodes the stream through ffmpeg and looks for a *digital brick wall* at a PCM source's Nyquist frequency: genuine DSD blends smoothly into the sigma-delta noise shaping (measured ≈ 3 dB step across 22.05 kHz on ground-truth files synthesized with a delta-sigma modulator), while DSD converted from 44.1/48 kHz PCM shows a ≈ 50 dB cliff there. A drop ≥ 30 dB flags the file as **Upsampled** (PCM-sourced DSD).
+**DSD authenticity (fake-DSD detection).** DSF/DFF headers are parsed natively (magic bytes, 1-bit rate → DSD64/128/256, channels, DST flag) — that authenticates the container exactly. The content check decodes the stream through ffmpeg and looks for a _digital brick wall_ at a PCM source's Nyquist frequency: genuine DSD blends smoothly into the sigma-delta noise shaping (measured ≈ 3 dB step across 22.05 kHz on ground-truth files synthesized with a delta-sigma modulator), while DSD converted from 44.1/48 kHz PCM shows a ≈ 50 dB cliff there. A drop ≥ 30 dB flags the file as **Upsampled** (PCM-sourced DSD).
 
 **Verified quality badges.** Files earn a small badge next to their format — **Hi-Res** for PCM above 48 kHz or 16-bit, **DSD64/128/256** for DSD — but only when no detection contradicts the claim (no upscaling, no upsampling, no transcoding). These are custom chips, not the official trademarked DSD / Hi-Res Audio logos, and unlike those logos they are backed by the analysis: a 96 kHz file that is really an upsampled CD gets flagged, not badged. A grey `?` badge means the container is authentic but the content could not be analyzed (no ffmpeg).
 
@@ -234,12 +234,12 @@ All cut-off-based detection — LAC included — assumes genuine music has energ
   The `audiopus_sys` crate compiles a vendored libopus with the autotools, so
   `autoreconf` has to be on `PATH` or the build stops at "Failed to autogen
   Opus". Most Linux setups already have them; macOS does not:
-    - macOS: `brew install autoconf automake libtool`
-    - Debian/Ubuntu: `sudo apt install autoconf automake libtool`
+  - macOS: `brew install autoconf automake libtool`
+  - Debian/Ubuntu: `sudo apt install autoconf automake libtool`
 - **ffmpeg** — only needed for the spectrogram feature. Install it with your package manager:
-    - macOS: `brew install ffmpeg`
-    - Debian/Ubuntu: `sudo apt install ffmpeg`
-    - Windows: `choco install ffmpeg` (or download from ffmpeg.org and add it to `PATH`)
+  - macOS: `brew install ffmpeg`
+  - Debian/Ubuntu: `sudo apt install ffmpeg`
+  - Windows: `choco install ffmpeg` (or download from ffmpeg.org and add it to `PATH`)
 
 `ffmpeg` is located automatically at runtime (it checks `PATH` plus common install locations such as Homebrew's `/opt/homebrew/bin`). If it lives somewhere unusual, point the app at it with the `FLACCOMPAGNON_FFMPEG` environment variable. Analysis, MD5 verification, and reports do **not** require ffmpeg for FLAC/WAV/AIFF/ALAC/CAF/OGG/MP3/AAC — only spectrogram rendering does. **DSD (`.dsf`/`.dff`) is the one exception**: its container header is always verified natively, but the content-level checks (dynamic range, clipping, cutoff, and the real-DSD-vs-PCM-sourced authenticity check) need ffmpeg to decode the 1-bit stream. Without it, a DSD file only gets header verification and its quality badge is marked "(unverified)".
 
@@ -249,17 +249,17 @@ All cut-off-based detection — LAC included — assumes genuine music has energ
 
 Nothing links against a system library: the two C codecs used for conversion (libopus, LAME) are vendored and built from source, so a finished binary needs nothing installed beyond Tauri's own runtime prerequisites (and the optional ffmpeg above). Building one, on the other hand, needs the autotools listed under Prerequisites — libopus is configured with them.
 
-| Crate | Used for |
-| --- | --- |
-| [`symphonia`](https://crates.io/crates/symphonia) / [`claxon`](https://crates.io/crates/claxon) | Audio decoding; `claxon` also drives the fused FLAC + MD5 pass. |
-| [`lofty`](https://crates.io/crates/lofty) | Reading and writing tags and cover art across every supported container. |
-| [`cpal`](https://crates.io/crates/cpal) | Audio output for in-app playback (footer transport, click-to-preview from the table). |
-| [`reqwest`](https://crates.io/crates/reqwest) | The online tag lookup — the only crate here that touches the network. Uses **rustls**, so no system OpenSSL is required. |
-| [`base64`](https://crates.io/crates/base64) | Moving cover-art bytes between the Rust core and the webview. |
-| [`flacenc`](https://crates.io/crates/flacenc) | Conversion panel's FLAC encoder — pure Rust, no C toolchain required. |
-| [`hound`](https://crates.io/crates/hound) | Conversion panel's WAV encoder (also used by the test suite's own WAV fixtures). |
-| [`audiopus`](https://crates.io/crates/audiopus) / [`ogg`](https://crates.io/crates/ogg) | Conversion panel's Opus encoder (`audiopus` wraps `libopus`) and the Ogg container muxing around it (`ogg`, pure Rust) — Opus packets alone aren't a playable file. |
-| [`mp3lame-encoder`](https://crates.io/crates/mp3lame-encoder) | Conversion panel's MP3 encoder, wrapping LAME. |
+| Crate                                                                                           | Used for                                                                                                                                                            |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`symphonia`](https://crates.io/crates/symphonia) / [`claxon`](https://crates.io/crates/claxon) | Audio decoding; `claxon` also drives the fused FLAC + MD5 pass.                                                                                                     |
+| [`lofty`](https://crates.io/crates/lofty)                                                       | Reading and writing tags and cover art across every supported container.                                                                                            |
+| [`cpal`](https://crates.io/crates/cpal)                                                         | Audio output for in-app playback (footer transport, click-to-preview from the table).                                                                               |
+| [`reqwest`](https://crates.io/crates/reqwest)                                                   | The online tag lookup — the only crate here that touches the network. Uses **rustls**, so no system OpenSSL is required.                                            |
+| [`base64`](https://crates.io/crates/base64)                                                     | Moving cover-art bytes between the Rust core and the webview.                                                                                                       |
+| [`flacenc`](https://crates.io/crates/flacenc)                                                   | Conversion panel's FLAC encoder — pure Rust, no C toolchain required.                                                                                               |
+| [`hound`](https://crates.io/crates/hound)                                                       | Conversion panel's WAV encoder (also used by the test suite's own WAV fixtures).                                                                                    |
+| [`audiopus`](https://crates.io/crates/audiopus) / [`ogg`](https://crates.io/crates/ogg)         | Conversion panel's Opus encoder (`audiopus` wraps `libopus`) and the Ogg container muxing around it (`ogg`, pure Rust) — Opus packets alone aren't a playable file. |
+| [`mp3lame-encoder`](https://crates.io/crates/mp3lame-encoder)                                   | Conversion panel's MP3 encoder, wrapping LAME.                                                                                                                      |
 
 ### 1. Install dependencies
 
@@ -302,18 +302,18 @@ Four GitHub Actions workflows are included:
 
 **Every artifact name ends with its platform**, so there is no guessing on the Releases page:
 
-| Your system | File to download |
-| --- | --- |
-| Windows 10/11 (64-bit) | `FlacCompagnon_<version>_Windows-x64.msi` |
-| macOS (Apple Silicon) | `FlacCompagnon_<version>_macOS-AppleSilicon.dmg` |
-| Linux (any distro, 64-bit) | `FlacCompagnon_<version>_Linux-x86_64.AppImage` |
-| Linux (Debian / Ubuntu) | `FlacCompagnon_<version>_Linux-x86_64.deb` |
+| Your system                | File to download                                 |
+| -------------------------- | ------------------------------------------------ |
+| Windows 10/11 (64-bit)     | `FlacCompagnon_<version>_Windows-x64.msi`        |
+| macOS (Apple Silicon)      | `FlacCompagnon_<version>_macOS-AppleSilicon.dmg` |
+| Linux (any distro, 64-bit) | `FlacCompagnon_<version>_Linux-x86_64.AppImage`  |
+| Linux (Debian / Ubuntu)    | `FlacCompagnon_<version>_Linux-x86_64.deb`       |
 
 The macOS `.app.tar.gz` is the same application as the `.dmg`, just archived. The release workflow builds with `tauri-action`, renames each artifact with its platform label, then uploads the set as a **draft** release.
 
 ### Installing on macOS (unsigned build)
 
-These builds are **not signed with an Apple Developer ID** (that needs a paid, $99/year Apple Developer account and notarization). macOS therefore quarantines the downloaded app and Gatekeeper reports that FlacCompagnon *"is damaged and can't be opened"* or that the developer *"cannot be verified"* — offering only to move it to the Trash. This is expected, not a corrupt download.
+These builds are **not signed with an Apple Developer ID** (that needs a paid, $99/year Apple Developer account and notarization). macOS therefore quarantines the downloaded app and Gatekeeper reports that FlacCompagnon _"is damaged and can't be opened"_ or that the developer _"cannot be verified"_ — offering only to move it to the Trash. This is expected, not a corrupt download.
 
 To run it: drag **FlacCompagnon.app** into `/Applications`, then clear the quarantine flag once:
 
@@ -407,11 +407,9 @@ Requests carry a descriptive `User-Agent` (as MusicBrainz's usage policy require
 - **Conversion's WAV output is fixed at 16-bit PCM**, not the source's own bit depth (unlike FLAC output, which preserves it) — deliberately, to keep the encoder call unambiguous; 24-bit WAV output may follow later. **AIFF is not offered** as a conversion target despite early planning around "WAV/AIFF" — WAV alone already covers the "guaranteed-honest PCM copy" use case, and adding a second PCM container didn't carry its own weight.
 - **Conversion doesn't support DSD sources** (`.dsf`/`.dff`) yet — see [Conversion](#9-conversion) above.
 
-
-
 ## Roadmap ideas
 
-Easy future additions (the analyzer is modular): per-channel spectral analysis, ReplayGain scanning, and reporting **intensity-stereo damage** as a quality indicator. Note that the transcode detector is already *robust to* joint-stereo coding — it tests the L, R, M and S representations, so an M/S-coded (or intensity-stereo) transcode is still caught. What is missing is the separate measurement of the harm that coding leaves behind: a Side channel that collapses above the intensity cutoff, and the stereo image narrowing with it.
+Easy future additions (the analyzer is modular): per-channel spectral analysis, ReplayGain scanning, and reporting **intensity-stereo damage** as a quality indicator. Note that the transcode detector is already _robust to_ joint-stereo coding — it tests the L, R, M and S representations, so an M/S-coded (or intensity-stereo) transcode is still caught. What is missing is the separate measurement of the harm that coding leaves behind: a Side channel that collapses above the intensity cutoff, and the stereo image narrowing with it.
 
 On the tagging side: **AcoustID/Chromaprint audio fingerprinting** so a track can be identified from its sound rather than its metadata — the way MusicBrainz Picard does. Fingerprinting needs an extra native dependency and an AcoustID API key, so it is deliberately out of scope for now.
 
