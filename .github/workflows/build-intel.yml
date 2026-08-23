@@ -48,9 +48,16 @@ jobs:
         with:
           args: --target x86_64-apple-darwin --bundles app
 
+      - name: Find Intel App
+        id: find-app
+        run: |
+          APP_PATH=$(find src-tauri/target -type d -name "*.app" | head -n 1)
+          echo "Found app: $APP_PATH"
+          echo "app_path=$APP_PATH" >> "$GITHUB_OUTPUT"
+
       - name: Upload Intel App
         uses: actions/upload-artifact@v4
         with:
           name: FlacCompagnon-Intel-App
-          path: src-tauri/target/x86_64-apple-darwin/release/bundle/macos/*.app
+          path: ${{ steps.find-app.outputs.app_path }}
           if-no-files-found: error
