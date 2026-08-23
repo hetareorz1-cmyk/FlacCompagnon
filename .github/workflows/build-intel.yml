@@ -25,6 +25,19 @@ jobs:
         with:
           targets: x86_64-apple-darwin
 
+      - name: Install macOS build dependencies
+        run: |
+          brew install autoconf automake libtool
+          brew link --overwrite automake
+
+      - name: Check build tools
+        run: |
+          which autoconf
+          which automake
+          which aclocal
+          which libtool
+          aclocal --version
+
       - name: Install dependencies
         run: npm install
 
