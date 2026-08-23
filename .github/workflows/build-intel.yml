@@ -28,12 +28,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Intel macOS DMG
-        run: npm run tauri build -- --target x86_64-apple-darwin
+      - name: Build Intel DMG
+        run: npm run tauri build -- --target x86_64-apple-darwin --bundles dmg
+
+      - name: Show generated bundles
+        run: |
+          echo "Generated bundle files:"
+          find src-tauri/target -type f \( -name "*.dmg" -o -name "*.app" \) -print
 
       - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
           name: FlacCompagnon-Intel-macOS
-          path: src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
+          path: src-tauri/target/**/release/bundle/dmg/*.dmg
           if-no-files-found: error
