@@ -1,4 +1,4 @@
-name: Build Intel macOS App
+name: Build Intel macOS DMG
 
 on:
   workflow_dispatch:
@@ -41,32 +41,31 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Intel App
+      - name: Build Intel DMG
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: --target x86_64-apple-darwin --bundles app
+          args: --target x86_64-apple-darwin --bundles dmg
 
-      - name: Find and prepare Intel App
+      - name: Find and prepare Intel DMG
         run: |
-          APP_PATH=$(find . -type d -name "*.app" -print -quit)
+          DMG_PATH=$(find . -type f -name "*.dmg" -print -quit)
 
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: .app was not found"
+          if [ -z "$DMG_PATH" ]; then
+            echo "ERROR: .dmg was not found"
             echo "Searching for bundle files..."
-            find . -path "*/bundle/*" -maxdepth 8 -print
+            find . -path "*/bundle/*" -maxdepth 10 -print
             exit 1
           fi
 
-          echo "Found: $APP_PATH"
+          echo "Found: $DMG_PATH"
 
-          rm -rf "$RUNNER_TEMP/FlacCompagnon.app"
-          cp -R "$APP_PATH" "$RUNNER_TEMP/FlacCompagnon.app"
+          cp "$DMG_PATH" "$RUNNER_TEMP/FlacCompagnon-Intel.dmg"
 
-      - name: Upload Intel App
+      - name: Upload Intel DMG
         uses: actions/upload-artifact@v4
         with:
-          name: FlacCompagnon-Intel-App
-          path: ${{ runner.temp }}/FlacCompagnon.app
+          name: FlacCompagnon-Intel-DMG
+          path: ${{ runner.temp }}/FlacCompagnon-Intel.dmg
           if-no-files-found: error
