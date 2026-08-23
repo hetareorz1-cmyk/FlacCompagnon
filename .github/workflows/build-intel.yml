@@ -30,8 +30,11 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
+      - name: Install macOS build dependencies
+         run: brew install autoconf automake libtool
+      
       - name: Install dependencies
-        run: npm install
+         run: npm install
 
       - name: Build Intel DMG
         uses: tauri-apps/tauri-action@v1
